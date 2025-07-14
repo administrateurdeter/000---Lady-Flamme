@@ -34,11 +34,11 @@ class XPCog(commands.Cog):
         """Tâche de fond pour sauvegarder périodiquement les données modifiées."""
         if not self._dirty:
             return
-        
+
         # Copie l'ensemble pour éviter les problèmes de modification pendant l'itération
         dirty_users_to_save = list(self._dirty)
         logger.info(f"[XPCog] Flush de {len(dirty_users_to_save)} utilisateurs en BDD")
-        
+
         for uid in dirty_users_to_save:
             if uid in self._cache:
                 save_user(self._cache[uid])
@@ -49,16 +49,18 @@ class XPCog(commands.Cog):
     async def _before_flush(self) -> None:
         await self.bot.wait_until_ready()
 
-    @tasks.loop(time=dt_time(hour=0, minute=0, second=5)) # Léger décalage pour éviter les race conditions
+    @tasks.loop(
+        time=dt_time(hour=0, minute=0, second=5)
+    )  # Léger décalage pour éviter les race conditions
     async def _daily_reset(self) -> None:
         """Reset quotidien des compteurs journaliers."""
         # On vide le cache local pour forcer la récupération des données fraîches
         self._cache.clear()
         self._dirty.clear()
-        
+
         # La fonction reset_all_daily_counts doit être adaptée en BDD
         # pour remettre à zéro les champs journaliers.
-        # reset_all_daily_counts() 
+        # reset_all_daily_counts()
         logger.info("[XPCog] Cache local vidé pour le reset quotidien.")
 
     @_daily_reset.before_loop
@@ -109,13 +111,16 @@ class XPCog(commands.Cog):
         # Calcul du gain d'XP (formule continue + plafond)
         xp_gain = 0
         if daily_xp_gain < XPConfig.XP_DAILY_CAP:
-            xp_gain = round(XPConfig.XP_FORMULA_BASE / (1 + XPConfig.XP_FORMULA_DECAY * daily_msg_count))
+            xp_gain = round(
+                XPConfig.XP_FORMULA_BASE
+                / (1 + XPConfig.XP_FORMULA_DECAY * daily_msg_count)
+            )
             xp_gain = min(xp_gain, XPConfig.XP_DAILY_CAP - daily_xp_gain)
 
         if xp_gain > 0:
             user["xp"] = user.get("xp", 0) + xp_gain
             user["daily_xp_gain"] += xp_gain
-            
+
             old_level = user.get("level", 0)
             new_level = total_xp_to_level(user["xp"])
 
@@ -123,13 +128,15 @@ class XPCog(commands.Cog):
                 user["level"] = new_level
                 msg_text = random.choice(StyleConfig.LEVEL_UP_MESSAGES)
                 bonus_msg = ""
-                
+
                 # Utilise la nouvelle fonction pour le bonus de palier
                 for lvl_check in range(old_level + 1, new_level + 1):
                     bonus = calculer_bonus_de_palier(lvl_check)
                     if bonus > 0:
                         user["coins"] += bonus
-                        bonus_msg += f"\n💰 **PALIER {lvl_check} ATTEINT !** +{bonus:,} Ignis"
+                        bonus_msg += (
+                            f"\n💰 **PALIER {lvl_check} ATTEINT !** +{bonus:,} Ignis"
+                        )
 
                 embed = discord.Embed(
                     title=f"{msg.author.display_name} → Niveau {new_level}",
@@ -142,12 +149,18 @@ class XPCog(commands.Cog):
 
                 # Attribution du rôle Citoyen
                 if isinstance(msg.author, discord.Member):
-                    role = discord.utils.get(msg.guild.roles, name=StyleConfig.ROLE_CITIZEN)
+                    role = discord.utils.get(
+                        msg.guild.roles, name=StyleConfig.ROLE_CITIZEN
+                    )
                     if role and role not in msg.author.roles:
                         try:
-                            await msg.author.add_roles(role, reason="Atteinte du premier niveau")
+                            await msg.author.add_roles(
+                                role, reason="Atteinte du premier niveau"
+                            )
                         except discord.Forbidden:
-                            logger.warning(f"Permissions manquantes pour ajouter le rôle {StyleConfig.ROLE_CITIZEN} à {msg.author.name}")
+                            logger.warning(
+                                f"Permissions manquantes pour ajouter le rôle {StyleConfig.ROLE_CITIZEN} à {msg.author.name}"
+                            )
 
         user["last_ts"] = now
         self._dirty.add(uid)
@@ -155,12 +168,12 @@ class XPCog(commands.Cog):
     def cog_unload(self) -> None:
         """Arrêt propre, flush final des données."""
         logger.info("[XPCog] Unload: flush final des données en attente.")
-        
+
         dirty_users_to_save = list(self._dirty)
         for uid in dirty_users_to_save:
             if uid in self._cache:
                 save_user(self._cache[uid])
-        
+
         self._flush_loop.cancel()
         self._daily_reset.cancel()
 
