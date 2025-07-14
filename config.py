@@ -22,29 +22,19 @@ class BotConfig:
 
 
 class XPConfig:
-    """Toutes les constantes liées au gain d'expérience, d'argent et aux paliers."""
+    """Toutes les constantes liées au gain d'expérience et d'or."""
 
     MIN_LEN: int = 5  # Longueur minimale d'un message pour être éligible à l'XP.
     COOLDOWN: int = 30  # Temps en secondes entre deux messages rapportant de l'XP.
-    COIN_PER_MSG: int = 1  # Nombre d'Ignis gagnés par message éligible.
 
-    XP_ZONES: list[tuple[int, int]] = [
-        (5, 120),
-        (15, 100),
-        (30, 60),
-        (60, 25),
-        (100, 12),
-        (200, 4),
-    ]
+    # Constantes pour la formule de gain d'XP
+    XP_FORMULA_BASE: int = 200
+    XP_FORMULA_DECAY: float = 0.1
+    XP_DAILY_CAP: int = 4000
 
-    MONEY_MILESTONES: dict[int, int] = {
-        10: 1_000,
-        20: 5_000,
-        30: 15_000,
-        50: 50_000,
-        75: 100_000,
-        100: 250_000,
-    }
+    # Constantes pour le gain d'or par message ("salaire" quotidien)
+    MONEY_PER_MESSAGE_AMOUNT: int = 5
+    MONEY_PER_MESSAGE_LIMIT: int = 5
 
 
 class StyleConfig:
@@ -117,8 +107,6 @@ class EconomyConfig:
     }
 
 
-# -----------------------------------------------------------------------------
-# Émojis et codes de couleurs centralisés pour les embeds et les logs
 class VisualConfig:
     """Codes couleur et émojis pour les embeds & logs."""
 

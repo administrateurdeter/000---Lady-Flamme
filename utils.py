@@ -1,12 +1,35 @@
 """
 Fonctions utilitaires et calculs mathématiques.
 
-Ce module contient la logique de calcul de la courbe d'XP, qui est complexe
-et isolée ici pour plus de clarté.
+Ce module contient la logique de calcul de la courbe d'XP et des bonus
+de paliers, qui sont complexes et isolées ici pour plus de clarté.
 """
 
 import math
 from typing import List
+
+
+def calculer_bonus_de_palier(niveau_atteint: int) -> int:
+    """
+    Calcule le bonus d'or pour un palier de 5 niveaux,
+    en utilisant le modèle de scaling par paliers de difficulté.
+    """
+    # La fonction ne s'applique que si le niveau est un multiple de 5
+    if niveau_atteint == 0 or niveau_atteint % 5 != 0:
+        return 0
+
+    if niveau_atteint == 100:
+        return 10000  # Le jackpot final
+
+    if 1 <= niveau_atteint <= 19:
+        return 250
+    elif 20 <= niveau_atteint <= 59:
+        return 750
+    elif 60 <= niveau_atteint <= 99:
+        return 2500
+
+    return 0
+
 
 # --- Configuration de la courbe de leveling ---
 MAX_LEVEL: int = 100
@@ -28,7 +51,7 @@ _C: float = _PHASE1_XP_AT_30 - _A * _exp30
 
 xp_cum: List[int] = []
 for L in range(1, MAX_LEVEL + 1):
-    xp_value: float  # une seule annotation
+    xp_value: float
     if L <= _PHASE1_MAX_LVL:
         xp_value = _PHASE1_XP_AT_30 * (L / _PHASE1_MAX_LVL) ** _PHASE1_EXPONENT
     else:
