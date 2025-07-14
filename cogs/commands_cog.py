@@ -45,15 +45,38 @@ class CommandsCog(commands.Cog):
 
         lb_data = get_leaderboard_from_cache()
 
+        # On récupère l'objet 'guild' pour pouvoir chercher les membres
+        guild = interaction.guild
+        if not guild:
+            await interaction.response.send_message(
+                "Erreur : impossible de récupérer les informations du serveur.",
+                ephemeral=True,
+            )
+            return
+
         embed = discord.Embed(
             title=f"{VisualConfig.EMOJIS['trophy']} Leaderboard XP",
             description=f"Consultez le [classement complet sur le site web]({BotConfig.WEB_URL}) !",
             colour=VisualConfig.COLORS["info"],
         )
-        for idx, user in enumerate(lb_data[:10], start=1):
+
+        for idx, user_data in enumerate(lb_data[:10], start=1):
+            # On essaie de trouver le membre sur le serveur
+            member = guild.get_member(user_data["user_id"])
+
+            if member:
+                # Si le membre est trouvé, on utilise son pseudo actuel
+                display_name = member.display_name
+            else:
+                # Sinon (s'il a quitté), on se rabat sur le pseudo en BDD ou un texte par défaut
+                display_name = (
+                    user_data.get("nick")
+                    or f"Utilisateur parti ({user_data['user_id']})"
+                )
+
             embed.add_field(
-                name=f"{idx}. {user['nick'] or user['user_id']}",
-                value=f"Level {user['level']} – {user['xp']} XP",
+                name=f"{idx}. {display_name}",
+                value=f"Level {user_data['level']} – {user_data['xp']:,} XP",
                 inline=False,
             )
         await interaction.response.send_message(embed=embed)
@@ -71,7 +94,7 @@ class CommandsCog(commands.Cog):
         """Affiche les statistiques détaillées d'un utilisateur."""
         target = user or interaction.user
         data = fetch_user(target.id)
-        lvl, xp = data["level"], data["xp"]
+        lvl, xp = data.get("level", 0), data.get("xp", 0)
 
         # Calcul de la progression dans le palier actuel
         if lvl < len(xp_cum):
@@ -89,11 +112,12 @@ class CommandsCog(commands.Cog):
             title=f"📊 Rang de {target.display_name}",
             colour=VisualConfig.COLORS["info"],
         )
+        embed.set_thumbnail(url=target.display_avatar.url)
         embed.add_field(name="Niveau", value=str(lvl), inline=True)
-        embed.add_field(name="XP totale", value=str(xp), inline=True)
+        embed.add_field(name="XP totale", value=f"{xp:,}", inline=True)
         embed.add_field(
             name=f"Progression vers {lvl+1}",
-            value=f"{cur}/{needed} XP\n{bar}",
+            value=f"{cur:,}/{needed:,} XP\n{bar}",
             inline=False,
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -105,14 +129,18 @@ class CommandsCog(commands.Cog):
     async def sac(self, interaction: discord.Interaction) -> None:
         """Affiche l'argent et l'inventaire de l'utilisateur."""
         data = fetch_user(interaction.user.id)
-        money = data["money"]
-        items = data.get("inventory", {}).get("items", [])
-        text = f"🔥 **Ignis :** {money} IG\n"
+        money = data.get("coins", 0)
+        items = data.get("items", [])
+
+        text = f"🔥 **Ignis :** {money:,} IG\n\n"
         text += "🎒 **Objets :** " + (", ".join(items) if items else "— Aucun objet —")
 
         embed = discord.Embed(
-            title="🎒 Ton sac", description=text, colour=VisualConfig.COLORS["info"]
+            title=f"🎒 Sac de {interaction.user.display_name}",
+            description=text,
+            colour=VisualConfig.COLORS["info"],
         )
+        embed.set_thumbnail(url=interaction.user.display_avatar.url)
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @commands.Cog.listener()
