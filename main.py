@@ -15,17 +15,17 @@ from discord.ext import commands
 from config import BotConfig
 from typing import List, Any
 
+
 def setup_logging() -> None:
     """Configure le logging rotatif pour les logs du bot."""
     file_handler: RotatingFileHandler = RotatingFileHandler(
-        filename="bot.log",
-        maxBytes=5_000_000,
-        backupCount=5,
-        encoding="utf-8"
+        filename="bot.log", maxBytes=5_000_000, backupCount=5, encoding="utf-8"
     )
     stream_handler: logging.StreamHandler = logging.StreamHandler()
     fmt: str = "%(asctime)s – %(levelname)s – %(name)s – %(message)s"
-    logging.basicConfig(level=logging.INFO, handlers=[file_handler, stream_handler], format=fmt)
+    logging.basicConfig(
+        level=logging.INFO, handlers=[file_handler, stream_handler], format=fmt
+    )
 
 
 async def main() -> None:
@@ -44,7 +44,9 @@ async def main() -> None:
     try:
         int(os.getenv("GUILD_ID"))  # type: ignore
     except (TypeError, ValueError):
-        logger.critical("La variable d'environnement GUILD_ID doit être un entier valide.")
+        logger.critical(
+            "La variable d'environnement GUILD_ID doit être un entier valide."
+        )
         sys.exit(1)
 
     intents: discord.Intents = discord.Intents.default()
@@ -56,7 +58,9 @@ async def main() -> None:
     async def on_ready() -> None:
         """Événement déclenché lorsque le bot est connecté et prêt."""
         # On s'assure que bot.user n'est pas None avant d'y accéder
-        assert bot.user is not None, "Le bot doit être connecté avant d'accéder à bot.user"
+        assert (
+            bot.user is not None
+        ), "Le bot doit être connecté avant d'accéder à bot.user"
         logger.info(f"Connecté comme {bot.user} (ID {bot.user.id})")
         try:
             # On utilise une annotation générique Any pour MyPy

@@ -25,7 +25,11 @@ from sqlalchemy.orm import Session, sessionmaker
 
 # --- Fallback si DATABASE_URL invalide ou non fournie ---
 _RAW_DB_URL = os.getenv("DATABASE_URL", "")
-if not _RAW_DB_URL or _RAW_DB_URL.lower().startswith("sqlite:///") or "://" not in _RAW_DB_URL:
+if (
+    not _RAW_DB_URL
+    or _RAW_DB_URL.lower().startswith("sqlite:///")
+    or "://" not in _RAW_DB_URL
+):
     # En mémoire pour les tests (et en local si pas de .env)
     _DB_URL = "sqlite:///:memory:"
 else:
@@ -88,7 +92,7 @@ def rebuild_leaderboard_cache() -> None:
             "level": u.level,
             "coins": u.coins,
             "items": u.items or [],
-            "avatar": f"https://cdn.discordapp.com/avatars/{u.user_id}/{u.user_id}.png"
+            "avatar": f"https://cdn.discordapp.com/avatars/{u.user_id}/{u.user_id}.png",
         }
         for u in users
     ]
@@ -119,7 +123,7 @@ def fetch_user(user_id: int) -> Dict[str, Any]:
         "xp": user.xp,
         "level": user.level,
         "coins": user.coins,
-        "items": user.items or []
+        "items": user.items or [],
     }
 
 

@@ -117,7 +117,7 @@ class EconomyConfig:
     }
 
 
-# -----------------------------------------------------------------------------  
+# -----------------------------------------------------------------------------
 # Émojis et codes de couleurs centralisés pour les embeds et les logs
 class VisualConfig:
     """Codes couleur et émojis pour les embeds & logs."""

@@ -28,7 +28,9 @@ class XPCog(commands.Cog):
             self._flush_loop.start()
         if not self._daily_reset.is_running():
             self._daily_reset.start()
-        logger.info("[XPCog] Tasks _flush_loop et _daily_reset démarrées après on_ready.")
+        logger.info(
+            "[XPCog] Tasks _flush_loop et _daily_reset démarrées après on_ready."
+        )
 
     @tasks.loop(seconds=XPConfig.COOLDOWN)
     async def _flush_loop(self) -> None:
