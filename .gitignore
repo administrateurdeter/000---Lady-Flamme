@@ -1,4 +1,4 @@
-# Virtual environments & dotenv
+# Virtual envs & dotenv
 venv/
 .venv/
 .env
@@ -13,10 +13,19 @@ __pycache__/
 *.log
 bot.log
 
+# Local DB
+dev_plok
+*.db
+
 # Build / packaging
 build/
 dist/
 *.egg-info/
+pip-wheel-metadata/
+
+# Coverage reports
+.coverage
+htmlcov/
 
 # IDEs
 .vscode/
