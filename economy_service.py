@@ -6,8 +6,8 @@ données des utilisateurs (solde, inventaire) et peut être réutilisé
 ailleurs si nécessaire.
 """
 
-from db import fetch_user, save_user
-from typing import Any, Dict, List
+from db import fetch_user, atomic_purchase
+from typing import Any, Dict
 
 
 class InsufficientFunds(Exception):
@@ -22,20 +22,21 @@ class EconomyService:
     def get_balance(self, user_id: int) -> int:
         """Récupère le solde d'un utilisateur."""
         user: Dict[str, Any] = fetch_user(user_id)
-        return user["money"]
+        return user.get("coins", 0)
 
     def purchase(self, user_id: int, price: int, item_name: str) -> Dict[str, Any]:
-        """Tente d'effectuer un achat pour un utilisateur."""
-        user: Dict[str, Any] = fetch_user(user_id)
-        if user["money"] < price:
-            raise InsufficientFunds(f"Solde insuffisant ({user['money']} < {price})")
+        """
+        Tente d'effectuer un achat pour un utilisateur de manière atomique et sécurisée.
+        
+        Lève une exception InsufficientFunds si l'achat échoue.
+        Retourne les données de l'utilisateur mises à jour en cas de succès.
+        """
 
-        user["money"] -= price
-        inv: Dict[str, Any] = user.get("inventory", {})
-        items: List[str] = inv.get("items", [])
-        items.append(item_name)
-        inv["items"] = items
-        user["inventory"] = inv
+        success, message = atomic_purchase(
+            user_id=user_id, item_name=item_name, price=price
+        )
 
-        save_user(user_id, user)
-        return user
+        if not success:
+            raise InsufficientFunds(message)
+
+        return fetch_user(user_id)
