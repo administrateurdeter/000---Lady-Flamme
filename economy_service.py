@@ -27,7 +27,7 @@ class EconomyService:
     def purchase(self, user_id: int, price: int, item_name: str) -> Dict[str, Any]:
         """
         Tente d'effectuer un achat pour un utilisateur de manière atomique et sécurisée.
-        
+
         Lève une exception InsufficientFunds si l'achat échoue.
         Retourne les données de l'utilisateur mises à jour en cas de succès.
         """

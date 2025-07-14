@@ -122,6 +122,7 @@ def save_user(data: Dict[str, Any]) -> None:
                     setattr(user, key, data[key])
             session.commit()
 
+
 def atomic_purchase(user_id: int, item_name: str, price: int) -> tuple[bool, str]:
     """
     Effectue un achat dans une transaction atomique pour éviter les race conditions.

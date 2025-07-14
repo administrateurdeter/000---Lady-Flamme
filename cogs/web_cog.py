@@ -27,21 +27,26 @@ LOGS_SECRET_KEY = os.environ.get("LOGS_SECRET_KEY")
 
 REQUEST_COUNT = Counter("http_requests_total", "Total HTTP Requests")
 
+
 @app.before_request
 def _before_request():
     REQUEST_COUNT.inc()
+
 
 @app.route("/")
 def home():
     return "Bot is alive and web server is running!", 200
 
+
 @app.route("/healthz")
 def healthz():
     return "OK", 200
 
+
 @app.route("/metrics")
 def metrics():
     return generate_latest(), 200, {"Content-Type": CONTENT_TYPE_LATEST}
+
 
 @app.route("/logs")
 def logs():
@@ -58,12 +63,14 @@ def logs():
         logger.exception("Erreur en lisant les logs", exc_info=e)
         return f"Erreur en lisant les logs : {e}", 500
 
+
 def xp_bounds(level: int):
     if level < 1:
         return 0, xp_cum[0] if xp_cum else 0
     if level >= len(xp_cum):
         return xp_cum[-2], xp_cum[-1]
     return xp_cum[level - 1], xp_cum[level]
+
 
 @app.route("/leaderboard")
 def leaderboard():
@@ -77,9 +84,9 @@ def leaderboard():
     for d in cached:
         xp = d.get("xp", 0)
         lvl = d.get("level", 0)
-        
+
         name = html.escape(d.get("nick") or f"Utilisateur {d.get('user_id')}")
-        
+
         avatar = d.get("avatar") or "https://cdn.discordapp.com/embed/avatars/0.png"
         xmin, xmax = xp_bounds(lvl)
         pct = int((xp - xmin) / (xmax - xmin) * 100) if xmax > xmin else 100
@@ -101,14 +108,18 @@ def leaderboard():
     start = (page - 1) * per_page
     entries = members[start : start + per_page]
 
-    return render_template(
-        "leaderboard.html",
-        entries=entries,
-        page=page,
-        per_page=per_page,
-        start=start,
-        pages=pages,
-    ), 200
+    return (
+        render_template(
+            "leaderboard.html",
+            entries=entries,
+            page=page,
+            per_page=per_page,
+            start=start,
+            pages=pages,
+        ),
+        200,
+    )
+
 
 class WebCog(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -118,13 +129,16 @@ class WebCog(commands.Cog):
         self._server = make_server("0.0.0.0", port, app)
         self._thread = Thread(target=self._server.serve_forever, daemon=True)
         self._thread.start()
-        logger.info(f"{VisualConfig.EMOJIS['web']} Serveur web démarré sur 0.0.0.0:{port}")
+        logger.info(
+            f"{VisualConfig.EMOJIS['web']} Serveur web démarré sur 0.0.0.0:{port}"
+        )
 
     def cog_unload(self) -> None:
         logger.info(f"{VisualConfig.EMOJIS['web']} Arrêt du serveur Flask…")
         self._server.shutdown()
         self._thread.join(timeout=5)
         logger.info(f"{VisualConfig.EMOJIS['web']} Serveur Flask arrêté.")
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(WebCog(bot))
