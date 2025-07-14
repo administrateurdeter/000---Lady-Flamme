@@ -1,0 +1,29 @@
+# Virtual environments & dotenv
+venv/
+.venv/
+.env
+.env.*
+
+# Byte-compiled / caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs
+*.log
+bot.log
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+
+# IDEs
+.vscode/
+.idea/
+
+# Mypy cache
+.mypy_cache/
+
+# Pytest cache
+.pytest_cache/

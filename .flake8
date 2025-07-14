@@ -1,0 +1,17 @@
+[flake8]
+# On exclut toujours le venv et les autres dossiers générés
+exclude = 
+    .venv,
+    venv,
+    __pycache__,
+    .pytest_cache,
+
+# On aligne sur Black (88) pour ton code, mais on laisse de la marge (120)
+max-line-length = 120
+extend-ignore = E203, W503
+
+# On ne veut plus de warnings d'import inutilisé dans les tests ni dans les cogs & db
+per-file-ignores =
+    tests/*.py: F401
+    cogs/*.py: F401, E501
+    db.py: F401

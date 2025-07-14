@@ -1,0 +1,5 @@
+discord.py>=2.5.1
+python-dotenv
+flask
+SQLAlchemy
+prometheus-client
