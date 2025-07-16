@@ -1,6 +1,13 @@
 [tool.black]
+# Configuration pour le formateur de code Black.
+
+# --- Longueur de ligne ---
+# On définit une longueur de ligne standard de 88 caractères pour
+# une lisibilité optimale et une cohérence avec l'écosystème Python.
 line-length = 88
 
 [tool.flake8]
+# Configuration de Flake8, dupliquée ici pour la compatibilité
+# avec certains outils qui lisent pyproject.toml.
 max-line-length = 88
 extend-ignore = ["E203", "W503"]

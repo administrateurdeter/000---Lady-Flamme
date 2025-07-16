@@ -1,2 +1,9 @@
-# Auto detect text files and perform LF normalization
+# Fichier .gitattributes
+# Gère les attributs des fichiers pour Git.
+
+# --- Normalisation des fins de ligne ---
+# Détecte automatiquement les fichiers texte et s'assure qu'ils utilisent
+# des fins de ligne LF (Line Feed) dans le dépôt Git.
+# Cela évite les problèmes de fins de ligne entre Windows (CRLF) et
+# les systèmes Unix (LF).
 * text=auto

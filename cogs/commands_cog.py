@@ -1,18 +1,17 @@
-"""
-Cog pour les commandes utilisateur de base (leaderboard, rank, sac).
-"""
+"""Cog pour les commandes utilisateur de base (leaderboard, rank, sac)."""
 
-import time
-import math
 import logging
+import time
+from typing import Optional
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 
 from config import BotConfig, VisualConfig
-from db import rebuild_leaderboard_cache, get_leaderboard_from_cache, fetch_user
-from utils import xp_cum, total_xp_to_level, make_progress_bar
+from db import fetch_user, get_leaderboard_from_cache, rebuild_leaderboard_cache
+from utils import MAX_LEVEL, XP_CUM_TABLE, make_progress_bar
+
 
 logger = logging.getLogger(__name__)
 
@@ -21,13 +20,17 @@ class CommandsCog(commands.Cog):
     """Regroupe les commandes slash accessibles aux utilisateurs."""
 
     def __init__(self, bot: commands.Bot) -> None:
+        """Initialise le cog des commandes.
+
+        Args:
+            bot: L'instance du bot Discord.
+        """
         self.bot = bot
         self._lb_last_rebuild: float = 0.0
-        # Durée de vie du cache du leaderboard en secondes pour éviter les reconstructions trop fréquentes.
-        self._lb_ttl: float = 30.0
+        self._lb_ttl: float = 30.0  # Durée de vie du cache du leaderboard
 
     def reset_leaderboard_cache_timer(self) -> None:
-        """Réinitialise le minuteur du cache, forçant une reconstruction à la prochaine commande."""
+        """Réinitialise le minuteur du cache, forçant une reconstruction."""
         self._lb_last_rebuild = 0.0
         logger.info("[CommandsCog] Leaderboard cache timer has been reset.")
 
@@ -45,7 +48,6 @@ class CommandsCog(commands.Cog):
 
         lb_data = get_leaderboard_from_cache()
 
-        # On récupère l'objet 'guild' pour pouvoir chercher les membres
         guild = interaction.guild
         if not guild:
             await interaction.response.send_message(
@@ -61,14 +63,11 @@ class CommandsCog(commands.Cog):
         )
 
         for idx, user_data in enumerate(lb_data[:10], start=1):
-            # On essaie de trouver le membre sur le serveur
             member = guild.get_member(user_data["user_id"])
 
             if member:
-                # Si le membre est trouvé, on utilise son pseudo actuel
                 display_name = member.display_name
             else:
-                # Sinon (s'il a quitté), on se rabat sur le pseudo en BDD ou un texte par défaut
                 display_name = (
                     user_data.get("nick")
                     or f"Utilisateur parti ({user_data['user_id']})"
@@ -89,23 +88,23 @@ class CommandsCog(commands.Cog):
         user="L’utilisateur dont tu veux voir le rang (par défaut : toi)."
     )
     async def rank(
-        self, interaction: discord.Interaction, user: discord.Member | None = None
+        self, interaction: discord.Interaction, user: Optional[discord.Member] = None
     ) -> None:
         """Affiche les statistiques détaillées d'un utilisateur."""
         target = user or interaction.user
         data = fetch_user(target.id)
         lvl, xp = data.get("level", 0), data.get("xp", 0)
 
-        # Calcul de la progression dans le palier actuel
-        if lvl < len(xp_cum):
-            xmin = xp_cum[lvl - 1] if lvl > 0 else 0
-            xmax = xp_cum[lvl]
+        # Calcul de la progression dans le palier actuel avec la nouvelle table
+        if lvl < MAX_LEVEL:
+            xmin = XP_CUM_TABLE[lvl]
+            xmax = XP_CUM_TABLE[lvl + 1]
             cur = xp - xmin
+            needed = xmax - xmin
         else:  # Niveau max atteint
-            xmin, xmax = xp_cum[-2], xp_cum[-1]
-            cur = xp - xmin
+            cur = 1
+            needed = 1
 
-        needed = xmax - xmin
         bar = make_progress_bar(cur, needed)
 
         embed = discord.Embed(
@@ -163,4 +162,5 @@ class CommandsCog(commands.Cog):
 
 
 async def setup(bot: commands.Bot) -> None:
+    """Fonction d'entrée pour charger le cog."""
     await bot.add_cog(CommandsCog(bot))

@@ -1,38 +1,52 @@
-# Virtual envs & dotenv
+# Fichier .gitignore
+# Spécifie les fichiers et dossiers à ignorer par Git.
+
+# --- Environnements virtuels et variables d'environnement ---
+# Ces fichiers contiennent des dépendances locales ou des secrets
+# et ne doivent jamais être versionnés.
 venv/
 .venv/
 .env
 .env.*
 
-# Byte-compiled / caches
+# --- Fichiers compilés et caches Python ---
+# Fichiers générés automatiquement par l'interpréteur Python.
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Logs
+# --- Logs ---
+# Les fichiers de log sont spécifiques à une exécution et ne doivent pas
+# être partagés.
 *.log
 bot.log
+launcher.log
 
-# Local DB
-dev_plok
+# --- Base de données locale ---
+# La base de données de développement est volatile et ne doit pas être versionnée.
+dev_plok.db
 *.db
+*.sqlite
+*.sqlite3
 
-# Build / packaging
+# --- Fichiers de build et de packaging ---
+# Dossiers générés lors de la création de paquets Python.
 build/
 dist/
 *.egg-info/
 pip-wheel-metadata/
 
-# Coverage reports
+# --- Rapports de tests et de couverture ---
+# Fichiers générés par les outils de test.
 .coverage
 htmlcov/
 
-# IDEs
+# --- Configuration des IDEs ---
+# Fichiers de configuration spécifiques à l'environnement de développement
+# de chaque développeur.
 .vscode/
 .idea/
 
-# Mypy cache
+# --- Caches des outils de qualité ---
 .mypy_cache/
-
-# Pytest cache
 .pytest_cache/

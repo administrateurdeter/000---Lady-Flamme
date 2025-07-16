@@ -1,17 +1,30 @@
 [flake8]
-# On exclut toujours le venv et les autres dossiers générés
-exclude = 
+# Configuration pour l'outil de linting Flake8.
+
+# --- Dossiers à exclure de l'analyse ---
+# On ignore les environnements virtuels et les caches.
+exclude =
     .venv,
     venv,
     __pycache__,
     .pytest_cache,
+    build,
+    dist
 
-# On aligne sur Black (88) pour ton code, mais on laisse de la marge (120)
-max-line-length = 120
+# --- Longueur de ligne maximale ---
+# On aligne sur la norme de Black (88) pour une cohérence parfaite.
+max-line-length = 88
+
+# --- Erreurs à ignorer globalement ---
+# E203: Espace blanc avant ':' (en conflit avec Black).
+# W503: Coupure de ligne avant un opérateur binaire (Black le fait).
 extend-ignore = E203, W503
 
-# On ne veut plus de warnings d'import inutilisé dans les tests ni dans les cogs & db
+# --- Erreurs à ignorer par fichier ---
+# F401: Import inutilisé. Utile dans les __init__.py et les tests.
+# E501: Ligne trop longue. On peut être plus souple pour certains fichiers.
 per-file-ignores =
+    # Les tests importent souvent des fixtures non utilisées directement.
     tests/*.py: F401
-    cogs/*.py: F401, E501
-    db.py: F401
+    # Les __init__ peuvent importer des éléments pour les exposer.
+    cogs/__init__.py: F401

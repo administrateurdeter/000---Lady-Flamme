@@ -1,41 +1,65 @@
-# tests/test_utils.py
+"""Tests unitaires pour le module utils.
 
+Ce fichier vérifie la correction du nouveau modèle "Spline Unifiée".
+"""
+
+import numpy as np
 import pytest
-from utils import total_xp_to_level, make_progress_bar, xp_cum
+
+# On importe les fonctions et la table pré-calculée depuis le module à tester
+from utils import (
+    MAX_LEVEL,
+    XP_CUM_TABLE,
+    calculer_bonus_de_palier,
+    make_progress_bar,
+    total_xp_to_level,
+)
 
 
-def test_total_xp_to_level():
-    """Vérifie que la conversion de l'XP en niveau est correcte."""
-    # Le premier seuil pour le niveau 1 est xp_cum[0]
-    level_1_threshold = xp_cum[0]  # Devrait être 583
+def test_xp_cum_table_generation():
+    """Vérifie les propriétés fondamentales de la table d'XP générée."""
+    # La table doit avoir MAX_LEVEL + 1 entrées (de 0 à 100)
+    assert len(XP_CUM_TABLE) == MAX_LEVEL + 1
+    # Le niveau 0 doit coûter 0 XP
+    assert XP_CUM_TABLE[0] == 0
+    # La table doit être strictement croissante
+    assert np.all(np.diff(XP_CUM_TABLE) > 0)
 
-    # Test au niveau 0
-    assert total_xp_to_level(0) == 0
-    assert total_xp_to_level(level_1_threshold - 1) == 0  # Juste avant le seuil
 
-    # Test au niveau 1
-    assert total_xp_to_level(level_1_threshold) == 1  # Exactement sur le seuil
-    assert total_xp_to_level(level_1_threshold + 1) == 1  # Juste après le seuil
+def test_total_xp_to_level_conversion():
+    """Vérifie que la conversion XP -> Niveau est correcte avec la nouvelle table."""
+    # Juste avant le seuil du niveau 1
+    assert total_xp_to_level(int(XP_CUM_TABLE[1]) - 1) == 0
+    # Exactement sur le seuil du niveau 1
+    assert total_xp_to_level(int(XP_CUM_TABLE[1])) == 1
+    # Juste après le seuil du niveau 1
+    assert total_xp_to_level(int(XP_CUM_TABLE[1]) + 1) == 1
 
-    # Test à un niveau plus élevé (le niveau 30 est atteint à 58379 XP)
-    level_30_threshold = xp_cum[29]  # xp_cum est indexé de 0 à 99
-    assert total_xp_to_level(level_30_threshold - 1) == 29
-    assert total_xp_to_level(level_30_threshold) == 30
+    # Test à un niveau plus élevé
+    level_50_threshold = int(XP_CUM_TABLE[50])
+    assert total_xp_to_level(level_50_threshold - 1) == 49
+    assert total_xp_to_level(level_50_threshold) == 50
+
+    # Test au niveau maximum
+    level_100_threshold = int(XP_CUM_TABLE[100])
+    assert total_xp_to_level(level_100_threshold) == 100
+    assert total_xp_to_level(level_100_threshold + 100000) == 100
+
+
+def test_calculer_bonus_de_palier():
+    """Vérifie la logique des bonus de paliers."""
+    assert calculer_bonus_de_palier(4) == 0
+    assert calculer_bonus_de_palier(5) == 250
+    assert calculer_bonus_de_palier(19) == 0
+    assert calculer_bonus_de_palier(20) == 750
+    assert calculer_bonus_de_palier(60) == 2500
+    assert calculer_bonus_de_palier(100) == 10000
 
 
 def test_make_progress_bar():
     """Vérifie que la barre de progression est générée correctement."""
-    # Test barre vide
     assert make_progress_bar(0, 100) == "[░░░░░░░░░░░░]"
-
-    # Test barre à moitié pleine
     assert make_progress_bar(50, 100) == "[██████░░░░░░]"
-
-    # Test barre pleine
     assert make_progress_bar(100, 100) == "[████████████]"
-
-    # Test de dépassement (doit être capé à 100%)
     assert make_progress_bar(150, 100) == "[████████████]"
-
-    # Test de cas limite (division par zéro)
     assert make_progress_bar(10, 0) == "[████████████]"

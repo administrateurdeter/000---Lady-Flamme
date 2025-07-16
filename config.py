@@ -1,5 +1,4 @@
-"""
-Fichier de configuration centralisé.
+"""Fichier de configuration centralisé.
 
 Ce module charge les variables d'environnement et définit les constantes
 de l'application. Pour une meilleure organisation à grande échelle, les
@@ -22,15 +21,15 @@ class BotConfig:
 
 
 class XPConfig:
-    """Toutes les constantes liées au gain d'expérience et d'or."""
+    """Constantes liées au gain d'expérience et d'or."""
 
     MIN_LEN: int = 5  # Longueur minimale d'un message pour être éligible à l'XP.
-    COOLDOWN: int = 30  # Temps en secondes entre deux messages rapportant de l'XP.
+    COOLDOWN: int = (
+        60  # Cooldown de 60 secondes entre deux messages rapportant de l'XP.
+    )
 
-    # Constantes pour la formule de gain d'XP
-    XP_FORMULA_BASE: int = 200
-    XP_FORMULA_DECAY: float = 0.1
-    XP_DAILY_CAP: int = 4000
+    # Constante PHI du modèle Spline Unifiée
+    PHI: float = 0.5
 
     # Constantes pour le gain d'or par message ("salaire" quotidien)
     MONEY_PER_MESSAGE_AMOUNT: int = 5

@@ -1,32 +1,64 @@
-name: Qualité & Typage
+# Nom du workflow qui apparaîtra dans l'onglet "Actions" de GitHub.
+name: Qualité & Typage du Code
 
+# --- Déclencheurs du Workflow ---
+# Ce workflow s'exécutera automatiquement dans les cas suivants :
 on:
+  # 1. À chaque push sur la branche 'main'.
   push:
     branches: [main]
+  # 2. À chaque création ou mise à jour d'une Pull Request ciblant 'main'.
   pull_request:
+    branches: [main]
 
+# --- Définition des Tâches (Jobs) ---
 jobs:
+  # Nom du job, ici 'quality' car il regroupe toutes les vérifications de qualité.
   quality:
+    # Spécifie que le job doit s'exécuter sur la dernière version d'Ubuntu
+    # fournie par GitHub Actions.
     runs-on: ubuntu-latest
+
+    # Séquence des étapes à exécuter pour ce job.
     steps:
+      # --- Étape 1: Récupération du code ---
+      # Utilise une action pré-faite de la marketplace pour cloner le dépôt
+      # dans l'environnement d'exécution.
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # --- Étape 2: Configuration de l'environnement Python ---
+      # Utilise une action pré-faite pour installer Python et le mettre
+      # à disposition dans le PATH.
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          # Spécifie la version de Python à utiliser, en cohérence avec le projet.
+          python-version: "3.10"
 
+      # --- Étape 3: Installation des dépendances de développement ---
+      # Installe les outils nécessaires pour les vérifications de qualité.
+      # Note : On n'installe pas les dépendances de `requirements.txt` ici,
+      # car les outils de linting n'en ont pas besoin pour l'analyse statique.
       - name: Install dev dependencies
         run: |
           python -m pip install --upgrade pip
           pip install black flake8 mypy
 
+      # --- Étape 4: Vérification du formatage avec Black ---
+      # Lance Black en mode "vérification seule" (`--check`).
+      # Le job échouera si des fichiers ne sont pas correctement formatés.
       - name: Black format check
         run: black --check .
 
+      # --- Étape 5: Analyse du style avec Flake8 ---
+      # Lance Flake8 pour détecter les erreurs de style et les incohérences
+      # non gérées par Black.
       - name: Flake8 lint
         run: flake8 .
 
+      # --- Étape 6: Vérification du typage avec MyPy ---
+      # Lance MyPy pour analyser statiquement le code et trouver les
+      # erreurs de typage potentielles.
       - name: MyPy type-check
         run: mypy .

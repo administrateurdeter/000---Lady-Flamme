@@ -1,5 +1,18 @@
+# requirements.txt
+
+# --- Cœur du bot Discord ---
 discord.py>=2.5.1
+
+# --- Gestion de la configuration ---
 python-dotenv
+
+# --- Serveur Web & Métriques ---
 flask
-SQLAlchemy
 prometheus-client
+
+# --- Base de données ---
+SQLAlchemy
+
+# --- Modèle de progression "Spline Unifiée" ---
+numpy
+scipy

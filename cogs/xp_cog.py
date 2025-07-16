@@ -1,37 +1,49 @@
+"""Cog gérant la logique de gain d'XP, niveaux et récompenses.
+
+Ce module contient le listener on_message qui est le cœur du système de
+progression. Il utilise le modèle "Spline Unifiée" pour une expérience
+équilibrée et sophistiquée.
+"""
+
 import logging
 import random
 from datetime import datetime, time as dt_time
+from typing import Dict, Set
+
 import discord
 from discord.ext import commands, tasks
-from db import fetch_user, save_user
-from utils import total_xp_to_level, calculer_bonus_de_palier
+
 from config import XPConfig, StyleConfig
+from db import fetch_user, save_user
+from utils import XP_CUM_TABLE, calculer_bonus_de_palier, total_xp_to_level
+
 
 logger = logging.getLogger(__name__)
 
 
 class XPCog(commands.Cog):
-    """Gère la logique de gain d'XP, niveaux et récompenses."""
+    """Gère la logique de gain d'XP avec le système Spline Unifiée."""
 
     def __init__(self, bot: commands.Bot) -> None:
+        """Initialise le cog XP.
+
+        Args:
+            bot: L'instance du bot Discord.
+        """
         self.bot = bot
-        self._cache: dict[int, dict] = {}
-        self._dirty: set[int] = set()
+        self._cache: Dict[int, Dict] = {}
+        self._dirty: Set[int] = set()
 
     @commands.Cog.listener()
     async def on_ready(self) -> None:
-        """Démarre les tasks quand le bot est prêt."""
+        """Démarre les tâches de fond lorsque le bot est prêt."""
         if not self._flush_loop.is_running():
             self._flush_loop.start()
-        if not self._daily_reset.is_running():
-            self._daily_reset.start()
-        logger.info(
-            "[XPCog] Tasks _flush_loop et _daily_reset démarrées après on_ready."
-        )
+        logger.info("[XPCog] Cog XP prêt avec le système Spline Unifiée.")
 
     @tasks.loop(seconds=60)
     async def _flush_loop(self) -> None:
-        """Tâche de fond pour sauvegarder périodiquement les données modifiées."""
+        """Sauvegarde périodiquement les données modifiées en base de données."""
         if not self._dirty:
             return
 
@@ -45,21 +57,13 @@ class XPCog(commands.Cog):
 
     @_flush_loop.before_loop
     async def _before_flush(self) -> None:
-        await self.bot.wait_until_ready()
-
-    @tasks.loop(time=dt_time(hour=0, minute=0, second=5))
-    async def _daily_reset(self) -> None:
-        """Reset quotidien des compteurs journaliers."""
-        self._cache.clear()
-        self._dirty.clear()
-        logger.info("[XPCog] Cache local vidé pour le reset quotidien.")
-
-    @_daily_reset.before_loop
-    async def _before_daily(self) -> None:
+        """Attend que le bot soit prêt avant de démarrer la boucle de sauvegarde."""
         await self.bot.wait_until_ready()
 
     @commands.Cog.listener()
     async def on_message(self, msg: discord.Message) -> None:
+        """Traite chaque message pour attribuer de l'XP et des récompenses."""
+        # --- Étape 1: Vérifications initiales ---
         if msg.author.bot or msg.guild is None:
             return
 
@@ -71,61 +75,57 @@ class XPCog(commands.Cog):
         uid = msg.author.id
         now = datetime.utcnow()
 
+        # --- Étape 2: Gestion du cache et du cooldown ---
         if uid not in self._cache:
             self._cache[uid] = fetch_user(uid)
         user = self._cache[uid]
 
-        # Mise à jour du pseudo si nécessaire
+        if (
+            now - user.get("last_ts", datetime.min)
+        ).total_seconds() < XPConfig.COOLDOWN:
+            return
+
         if user.get("nick") != msg.author.display_name:
             user["nick"] = msg.author.display_name
             self._dirty.add(uid)
 
-        last_ts = user.get("last_ts", datetime.min)
-        if (now - last_ts).total_seconds() < XPConfig.COOLDOWN:
-            return
-
+        # --- Étape 3: Logique de gain d'XP et d'or ---
         today = now.date()
-        last_daily_date = user.get("last_daily")
-        if last_daily_date != today:
+        if user.get("last_daily") != today:
             user["messages_today"] = 0
-            user["daily_xp_gain"] = 0
             user["last_daily"] = today
 
         user["messages_today"] = user.get("messages_today", 0) + 1
         daily_msg_count = user["messages_today"]
-        daily_xp_gain = user.get("daily_xp_gain", 0)
 
+        # Calcul du gain d'XP avec la formule Spline Unifiée
+        xp_gain = round(200 / (1 + XPConfig.PHI * daily_msg_count))
+
+        # Calcul du gain d'or (logique économique conservée)
         if daily_msg_count <= XPConfig.MONEY_PER_MESSAGE_LIMIT:
             user["coins"] = user.get("coins", 0) + XPConfig.MONEY_PER_MESSAGE_AMOUNT
 
-        xp_gain = 0
-        if daily_xp_gain < XPConfig.XP_DAILY_CAP:
-            xp_gain = round(
-                XPConfig.XP_FORMULA_BASE
-                / (1 + XPConfig.XP_FORMULA_DECAY * daily_msg_count)
-            )
-            xp_gain = min(xp_gain, XPConfig.XP_DAILY_CAP - daily_xp_gain)
-
         if xp_gain > 0:
             user["xp"] = user.get("xp", 0) + xp_gain
-            user["daily_xp_gain"] = user.get("daily_xp_gain", 0) + xp_gain
 
+            # --- Étape 4: Logique de Level-Up (robuste avec boucle while) ---
             old_level = user.get("level", 0)
-            new_level = total_xp_to_level(user["xp"])
+            new_level = old_level
 
-            if new_level > old_level:
-                user["level"] = new_level
+            # La boucle vérifie si l'XP de l'utilisateur dépasse le seuil du NIVEAU SUIVANT
+            while new_level < MAX_LEVEL and user["xp"] >= XP_CUM_TABLE[new_level + 1]:
+                new_level += 1
+
+                bonus = calculer_bonus_de_palier(new_level)
+                if bonus > 0:
+                    user["coins"] += bonus
+                    bonus_msg = (
+                        f"\n💰 **PALIER {new_level} ATTEINT !** +{bonus:,} Ignis"
+                    )
+                else:
+                    bonus_msg = ""
+
                 msg_text = random.choice(StyleConfig.LEVEL_UP_MESSAGES)
-                bonus_msg = ""
-
-                for lvl_check in range(old_level + 1, new_level + 1):
-                    bonus = calculer_bonus_de_palier(lvl_check)
-                    if bonus > 0:
-                        user["coins"] = user.get("coins", 0) + bonus
-                        bonus_msg += (
-                            f"\n💰 **PALIER {lvl_check} ATTEINT !** +{bonus:,} Ignis"
-                        )
-
                 embed = discord.Embed(
                     title=f"{msg.author.display_name} → Niveau {new_level}",
                     description=f"{msg_text}{StyleConfig.EMOJI_KERMIT}{bonus_msg}",
@@ -134,7 +134,9 @@ class XPCog(commands.Cog):
                 embed.set_thumbnail(url=msg.author.display_avatar.url)
                 await msg.channel.send(embed=embed)
 
-                if isinstance(msg.author, discord.Member):
+            if new_level > old_level:
+                user["level"] = new_level
+                if old_level == 0 and isinstance(msg.author, discord.Member):
                     role = discord.utils.get(
                         msg.guild.roles, name=StyleConfig.ROLE_CITIZEN
                     )
@@ -148,11 +150,12 @@ class XPCog(commands.Cog):
                                 f"Permissions manquantes pour ajouter le rôle {StyleConfig.ROLE_CITIZEN} à {msg.author.name}"
                             )
 
+        # --- Étape 5: Finalisation ---
         user["last_ts"] = now
         self._dirty.add(uid)
 
     def cog_unload(self) -> None:
-        """Arrêt propre, flush final des données."""
+        """Arrête proprement les tâches de fond lors du déchargement du cog."""
         logger.info("[XPCog] Unload: flush final des données en attente.")
 
         dirty_users_to_save = list(self._dirty)
@@ -161,8 +164,8 @@ class XPCog(commands.Cog):
                 save_user(self._cache[uid])
 
         self._flush_loop.cancel()
-        self._daily_reset.cancel()
 
 
 async def setup(bot: commands.Bot) -> None:
+    """Fonction d'entrée pour charger le cog."""
     await bot.add_cog(XPCog(bot))
