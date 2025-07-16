@@ -13,7 +13,7 @@ from datetime import datetime
 import discord
 from discord.ext import commands, tasks
 
-from config import XPConfig, StyleConfig, VisualConfig
+from config import XPConfig, StyleConfig
 from db import fetch_user, save_user
 from utils import XP_CUM_TABLE, calculer_bonus_de_palier, MAX_LEVEL
 

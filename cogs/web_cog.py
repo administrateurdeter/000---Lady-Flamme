@@ -6,7 +6,6 @@ import math
 import os
 from threading import Thread
 
-import discord
 from discord.ext import commands
 from flask import Flask, render_template, request
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
