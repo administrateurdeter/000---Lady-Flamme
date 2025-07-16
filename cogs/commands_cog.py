@@ -1,3 +1,4 @@
+# Fichier réécrit à 100%
 """Cog pour les commandes utilisateur de base (leaderboard, rank, sac)."""
 
 import logging
@@ -95,11 +96,15 @@ class CommandsCog(commands.Cog):
         data = fetch_user(target.id)
         lvl, xp = data.get("level", 0), data.get("xp", 0)
 
-        # Calcul de la progression dans le palier actuel avec la nouvelle table
+        # Calcul de la progression en utilisant la table d'XP "Spline Unifiée"
         if lvl < MAX_LEVEL:
+            # XP nécessaire pour le niveau actuel (borne inférieure)
             xmin = XP_CUM_TABLE[lvl]
+            # XP nécessaire pour le niveau suivant (borne supérieure)
             xmax = XP_CUM_TABLE[lvl + 1]
+            # XP gagné depuis le début du niveau actuel
             cur = xp - xmin
+            # XP total à gagner dans ce niveau
             needed = xmax - xmin
         else:  # Niveau max atteint
             cur = 1

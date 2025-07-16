@@ -1,30 +1,24 @@
-"""Cog pour le serveur web Flask.
-
-Ce module gère le serveur web qui expose le leaderboard complet et d'autres
-endpoints comme les métriques Prometheus.
-"""
+"""Cog pour le serveur web Flask."""
 
 import html
 import logging
 import math
 import os
 from threading import Thread
-from typing import List
 
+import discord
+from discord.ext import commands
 from flask import Flask, render_template, request
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 from werkzeug.serving import make_server
 
 from config import VisualConfig
 from db import get_leaderboard_from_cache
-
-# Correction du bug : on importe la nouvelle table d'XP depuis utils
 from utils import XP_CUM_TABLE
 
 
 logger = logging.getLogger(__name__)
 
-# --- Configuration de Flask ---
 HERE = os.path.dirname(__file__)
 TEMPLATES = os.path.abspath(os.path.join(HERE, "..", "templates"))
 
@@ -77,14 +71,7 @@ def logs():
 
 
 def xp_bounds(level: int) -> tuple[int, int]:
-    """Calcule les bornes d'XP pour un niveau donné.
-
-    Args:
-        level: Le niveau de l'utilisateur.
-
-    Returns:
-        Un tuple (xp_minimum_pour_ce_niveau, xp_requis_pour_le_prochain_niveau).
-    """
+    """Calcule les bornes d'XP pour un niveau donné."""
     if level < 1:
         return 0, int(XP_CUM_TABLE[1]) if len(XP_CUM_TABLE) > 1 else 0
     if level >= len(XP_CUM_TABLE) - 1:
@@ -109,7 +96,6 @@ def leaderboard():
         name = html.escape(d.get("nick") or f"Utilisateur {d.get('user_id')}")
         avatar = d.get("avatar") or "https://cdn.discordapp.com/embed/avatars/0.png"
 
-        # Correction du bug : utilise la nouvelle fonction xp_bounds
         xmin, xmax = xp_bounds(lvl)
         pct = int((xp - xmin) / (xmax - xmin) * 100) if xmax > xmin else 100
 

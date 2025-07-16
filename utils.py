@@ -1,15 +1,18 @@
+# Fichier réécrit à 100%
 """Fonctions utilitaires et calculs mathématiques.
 
 Ce module contient la logique de calcul de la courbe de progression "Spline Unifiée",
-qui est le cœur du système de leveling.
+qui est le cœur du système de leveling. Il pré-calcule une table de recherche
+pour des performances optimales.
 """
 
 import logging
-import math
 from typing import List
 
 import numpy as np
 from scipy.interpolate import CubicSpline
+
+from config import XPConfig
 
 logger = logging.getLogger(__name__)
 
@@ -17,24 +20,25 @@ logger = logging.getLogger(__name__)
 # MODÈLE DE PROGRESSION "SPLINE UNIFIÉE"
 # ==============================================================================
 
-# --- CONSTANTES FONDAMENTALES DU MODÈLE ---
-PHI: float = 0.5
-CIBLE_MESSAGES_PER_DAY: int = 10
-MAX_LEVEL: int = 100
-KNOT_LEVELS: List[int] = [1, 15, 60, 100]
-OPTIMAL_KNOT_VALUES: List[float] = [0.2, 1.8, 18, 85]
+# --- CONSTANTES FONDAMENTALES (importées depuis config.py) ---
+PHI: float = XPConfig.PHI
+CIBLE_MESSAGES_PER_DAY: int = XPConfig.CIBLE_MESSAGES_PER_DAY
+MAX_LEVEL: int = XPConfig.MAX_LEVEL
+KNOT_LEVELS: List[int] = XPConfig.KNOT_LEVELS
+OPTIMAL_KNOT_VALUES: List[float] = XPConfig.OPTIMAL_KNOT_VALUES
 LEVELS_NP: np.ndarray = np.arange(1, MAX_LEVEL + 1)
 
 
 def get_unified_xp_table() -> np.ndarray:
     """Calcule et retourne la table d'XP cumulé pour les 100 niveaux.
 
-    Cette fonction est le cœur du nouveau système "Spline Unifiée".
+    Cette fonction est le cœur du système "Spline Unifiée".
     Elle ne doit être exécutée qu'une seule fois au démarrage du bot.
 
     Returns:
         Un tableau NumPy où l'index `i` contient le seuil d'XP total
-        nécessaire pour atteindre le niveau `i`.
+        nécessaire pour atteindre le niveau `i+1`. La table est de taille
+        MAX_LEVEL+1, avec l'index 0 valant 0.
     """
     # --- Étape 1: Calcul du gain de référence de la Cible ---
     daily_xp_cible = sum(
@@ -57,7 +61,8 @@ def get_unified_xp_table() -> np.ndarray:
     xp_cumulative_table = np.cumsum(xp_req_per_level)
 
     # --- Étape 6: Ajout d'un 0 au début pour que l'index corresponde au niveau ---
-    # XP_CUM_TABLE[1] est le seuil pour atteindre le niveau 1.
+    # XP_CUM_TABLE[0] = 0 (pour le niveau 0)
+    # XP_CUM_TABLE[1] = seuil pour atteindre le niveau 1.
     final_table = np.insert(xp_cumulative_table, 0, 0)
     logger.info(
         f"[Spline] Table d'XP Unifiée générée. XP pour Lvl 100: {final_table[-1]:,.0f} XP"
@@ -79,7 +84,12 @@ def total_xp_to_level(xp: int) -> int:
         Le niveau actuel de l'utilisateur.
     """
     # searchsorted est extrêmement rapide pour trouver l'index dans une table triée.
-    return int(np.searchsorted(XP_CUM_TABLE, xp, side="right")) - 1
+    # 'right' signifie que si xp == XP_CUM_TABLE[i], il retourne i.
+    # On soustrait 1 pour obtenir le niveau actuel.
+    # Ex: XP_CUM_TABLE = [0, 300, 900]. xp=299 -> searchsorted=1 -> level=0.
+    # xp=300 -> searchsorted=2 -> level=1.
+    level = np.searchsorted(XP_CUM_TABLE, xp, side="right") - 1
+    return int(max(0, level))  # Assure de ne jamais retourner un niveau négatif
 
 
 def calculer_bonus_de_palier(niveau_atteint: int) -> int:

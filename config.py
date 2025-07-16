@@ -1,3 +1,4 @@
+# Fichier réécrit à 100%
 """Fichier de configuration centralisé.
 
 Ce module charge les variables d'environnement et définit les constantes
@@ -28,8 +29,16 @@ class XPConfig:
         60  # Cooldown de 60 secondes entre deux messages rapportant de l'XP.
     )
 
-    # Constante PHI du modèle Spline Unifiée
+    # --- Constantes du modèle "Spline Unifiée" ---
+    MAX_LEVEL: int = 100
+    # Constante PHI qui régit l'écart de gain entre les joueurs
     PHI: float = 0.5
+    # Profil de référence pour le calcul de la courbe (messages/jour)
+    CIBLE_MESSAGES_PER_DAY: int = 10
+    # Piliers de la courbe de "ressenti" (Niveaux)
+    KNOT_LEVELS: list[int] = [1, 15, 60, 100]
+    # Valeurs de "ressenti" associées aux piliers (Jours/Niveau pour la Cible)
+    OPTIMAL_KNOT_VALUES: list[float] = [0.2, 1.8, 18, 85]
 
     # Constantes pour le gain d'or par message ("salaire" quotidien)
     MONEY_PER_MESSAGE_AMOUNT: int = 5

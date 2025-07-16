@@ -1,8 +1,4 @@
-"""Cog pour la boutique et les commandes économiques.
-
-Ce module gère les interactions des utilisateurs avec l'économie du serveur,
-notamment l'achat d'objets.
-"""
+"""Cog pour la boutique et les commandes économiques."""
 
 import logging
 
@@ -20,11 +16,7 @@ class EconomyCog(commands.Cog):
     """Gère les commandes liées à l'économie, comme l'achat d'objets."""
 
     def __init__(self, bot: commands.Bot) -> None:
-        """Initialise le cog économique.
-
-        Args:
-            bot: L'instance du bot Discord.
-        """
+        """Initialise le cog économique."""
         self.bot = bot
         self.service = EconomyService()
 
@@ -40,10 +32,12 @@ class EconomyCog(commands.Cog):
             colour=0xFE6A33,
         )
         for key, item_data in EconomyConfig.ITEMS.items():
+            desc = (
+                f"Prix : **{item_data['price']:,}** Ignis\n"
+                f"*Description : {item_data['description']}*"
+            )
             embed.add_field(
-                name=f"**{item_data['name']}** - `{key}`",
-                value=f"Prix : **{item_data['price']:,}** Ignis\n*Description : {item_data['description']}*",
-                inline=False,
+                name=f"**{item_data['name']}** - `{key}`", value=desc, inline=False
             )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
@@ -56,23 +50,23 @@ class EconomyCog(commands.Cog):
         """Gère la logique d'achat d'un objet par un utilisateur."""
         item_key = item.lower()
 
-        # --- Étape 1: Vérifier si l'objet existe ---
         if item_key not in EconomyConfig.ITEMS:
             embed = discord.Embed(
                 title=f"{VisualConfig.EMOJIS['error']} Objet introuvable",
-                description=f"L'objet `{item_key}` n'existe pas. Utilisez `/shop` pour voir les objets disponibles.",
+                description=(
+                    f"L'objet `{item_key}` n'existe pas. Utilisez `/shop` "
+                    "pour voir les objets disponibles."
+                ),
                 colour=VisualConfig.COLORS["error"],
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
-        # --- Étape 2: Récupérer les informations de l'objet ---
         item_data = EconomyConfig.ITEMS[item_key]
         price = int(item_data["price"])
         name = str(item_data["name"])
         user_id = interaction.user.id
 
-        # --- Étape 3: Tenter l'achat via le service économique ---
         try:
             self.service.purchase(user_id=user_id, price=price, item_name=name)
 
@@ -95,7 +89,9 @@ class EconomyCog(commands.Cog):
             logger.error(f"Erreur inattendue lors de l'achat par {user_id}", exc_info=e)
             embed = discord.Embed(
                 title=f"{VisualConfig.EMOJIS['error']} Erreur Interne",
-                description="Une erreur inattendue est survenue. L'équipe a été notifiée.",
+                description=(
+                    "Une erreur inattendue est survenue. " "L'équipe a été notifiée."
+                ),
                 colour=VisualConfig.COLORS["error"],
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)

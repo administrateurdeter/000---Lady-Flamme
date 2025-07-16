@@ -5,6 +5,7 @@ d'accès atomiques et sécurisées pour interagir avec la base de données.
 Il inclut également un système de cache pour le leaderboard.
 """
 
+import logging
 import os
 from datetime import datetime
 from typing import Any, Dict, List

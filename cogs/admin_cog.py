@@ -5,11 +5,7 @@ import logging
 import discord
 from discord.ext import commands
 
-from cogs.commands_cog import CommandsCog
-from cogs.xp_cog import XPCog
-from db import User, get_session, rebuild_leaderboard_cache, save_user
-
-# On importe la fonction de recalcul depuis le nouveau module utils
+from db import User, get_session, rebuild_leaderboard_cache
 from utils import total_xp_to_level
 
 
@@ -51,14 +47,10 @@ class AdminCog(commands.Cog):
     @commands.command(name="recalculate_levels")
     @commands.is_owner()
     async def recalculate_all_levels(self, ctx: commands.Context) -> None:
-        """[MAINTENANCE] Recalcule le niveau de TOUS les utilisateurs.
-
-        Cette commande doit être utilisée une seule fois après la migration
-        vers le système Spline Unifiée pour aligner les niveaux de tous
-        les membres sur la nouvelle courbe de progression.
-        """
+        """[MAINTENANCE] Recalcule le niveau de TOUS les utilisateurs."""
         await ctx.send(
-            "Début du recalcul de tous les niveaux... Cette opération peut prendre un moment."
+            "Début du recalcul de tous les niveaux... "
+            "Cette opération peut prendre un moment."
         )
 
         updated_count = 0
@@ -75,11 +67,11 @@ class AdminCog(commands.Cog):
 
             session.commit()
 
-        # Reconstruit le cache du leaderboard pour refléter les changements
         rebuild_leaderboard_cache()
 
         await ctx.send(
-            f"✅ Recalcul terminé ! {updated_count} utilisateurs ont vu leur niveau mis à jour."
+            f"✅ Recalcul terminé ! {updated_count} utilisateurs ont vu "
+            "leur niveau mis à jour."
         )
 
 

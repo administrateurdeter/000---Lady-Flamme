@@ -1,3 +1,4 @@
+# Fichier réécrit à 100%
 """Cog gérant la logique de gain d'XP, niveaux et récompenses.
 
 Ce module contient le listener on_message qui est le cœur du système de
@@ -7,15 +8,14 @@ progression. Il utilise le modèle "Spline Unifiée" pour une expérience
 
 import logging
 import random
-from datetime import datetime, time as dt_time
-from typing import Dict, Set
+from datetime import datetime
 
 import discord
 from discord.ext import commands, tasks
 
-from config import XPConfig, StyleConfig
+from config import XPConfig, StyleConfig, VisualConfig
 from db import fetch_user, save_user
-from utils import XP_CUM_TABLE, calculer_bonus_de_palier, total_xp_to_level
+from utils import XP_CUM_TABLE, calculer_bonus_de_palier, MAX_LEVEL
 
 
 logger = logging.getLogger(__name__)
@@ -25,14 +25,10 @@ class XPCog(commands.Cog):
     """Gère la logique de gain d'XP avec le système Spline Unifiée."""
 
     def __init__(self, bot: commands.Bot) -> None:
-        """Initialise le cog XP.
-
-        Args:
-            bot: L'instance du bot Discord.
-        """
+        """Initialise le cog XP."""
         self.bot = bot
-        self._cache: Dict[int, Dict] = {}
-        self._dirty: Set[int] = set()
+        self._cache: dict[int, dict] = {}
+        self._dirty: set[int] = set()
 
     @commands.Cog.listener()
     async def on_ready(self) -> None:
@@ -80,6 +76,7 @@ class XPCog(commands.Cog):
             self._cache[uid] = fetch_user(uid)
         user = self._cache[uid]
 
+        # Le cooldown est géré par 'last_ts' qui est mis à jour à la fin
         if (
             now - user.get("last_ts", datetime.min)
         ).total_seconds() < XPConfig.COOLDOWN:
@@ -91,7 +88,12 @@ class XPCog(commands.Cog):
 
         # --- Étape 3: Logique de gain d'XP et d'or ---
         today = now.date()
-        if user.get("last_daily") != today:
+        last_daily_date = user.get("last_daily")
+        # Assurer la compatibilité si last_daily est un datetime
+        if isinstance(last_daily_date, datetime):
+            last_daily_date = last_daily_date.date()
+
+        if last_daily_date != today:
             user["messages_today"] = 0
             user["last_daily"] = today
 
@@ -113,6 +115,7 @@ class XPCog(commands.Cog):
             new_level = old_level
 
             # La boucle vérifie si l'XP de l'utilisateur dépasse le seuil du NIVEAU SUIVANT
+            # en utilisant la table pré-calculée. Gère les multi-level ups.
             while new_level < MAX_LEVEL and user["xp"] >= XP_CUM_TABLE[new_level + 1]:
                 new_level += 1
 
