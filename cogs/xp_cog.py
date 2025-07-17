@@ -76,9 +76,8 @@ class XPCog(commands.Cog):
         user = self._cache[uid]
 
         if (
-            (now - user.get("last_ts", datetime.min)).total_seconds()
-            < XPConfig.COOLDOWN
-        ):
+            now - user.get("last_ts", datetime.min)
+        ).total_seconds() < XPConfig.COOLDOWN:
             return
 
         if user.get("nick") != msg.author.display_name:

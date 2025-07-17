@@ -47,8 +47,7 @@ class ErrorHandlerCog(commands.Cog):
         embed = discord.Embed(
             title=f"{VisualConfig.EMOJIS['error']} Erreur interne",
             description=(
-                "Oups… une erreur inattendue est survenue. "
-                "L’équipe a été notifiée."
+                "Oups… une erreur inattendue est survenue. " "L’équipe a été notifiée."
             ),
             colour=VisualConfig.COLORS["error"],
         )
