@@ -48,7 +48,8 @@ def main_launcher() -> None:
             # Si le processus se termine, on logue le code de sortie.
             # Une sortie normale ne déclenchera pas de redémarrage.
             logger.warning(
-                f"Le processus du bot s'est arrêté avec le code de sortie: {return_code}."
+                "Le processus du bot s'est arrêté avec le code de sortie: "
+                f"{return_code}."
             )
             break  # Sort de la boucle while pour arrêter le launcher.
 

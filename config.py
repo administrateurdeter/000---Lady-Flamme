@@ -45,14 +45,14 @@ class XPConfig:
 
 
 class StyleConfig:
-    """Constantes liées aux messages, rôles et emojis pour une identité visuelle cohérente."""
+    """Constantes liées aux messages, rôles et emojis."""
 
     ROLE_CITIZEN: str = "Citoyen"
     EMOJI_KERMIT: str = "🎉"
     LEVEL_UP_MESSAGES: list[str] = [
         "te voilà plus flamboyant·e que jamais, l’aventure ne fait que commencer !",
         "la chaleur de ta détermination illumine désormais un nouveau niveau.",
-        "ta légende s’écrit doucement dans les nuages. Continuons à monter ensemble !",
+        "ta légende s’écrit doucement dans les nuages. Continuons à monter !",
         "tu franchis les cieux avec élégance, j’admire ta progression !",
         "tu portes désormais haut les couleurs de notre expédition.",
         "ta passion brûle d’un éclat nouveau, je suis fière de toi !",
@@ -78,7 +78,7 @@ class StyleConfig:
         "tu es désormais plus haut, plus fort, plus rayonnant·e.",
         "avec chaque niveau, c’est tout notre univers qui gagne en beauté.",
         "ce nouveau palier est une promesse d’encore plus belles découvertes.",
-        "tu montes brillamment en altitude, et Lady Flamme sourit fièrement à tes côtés.",
+        "tu montes brillamment en altitude, et Lady Flamme sourit à tes côtés.",
     ]
 
 
@@ -99,17 +99,20 @@ class EconomyConfig:
         "xp_block": {
             "name": "Malware",
             "price": 348,
-            "description": "Bloque la prise d'XP du prochain minuit au suivant. (Non cumulable)",
+            "description": "Bloque la prise d'XP du prochain minuit au suivant. "
+            "(Non cumulable)",
         },
         "spy": {
             "name": "Lunettes Meta",
             "price": 20,
-            "description": "Permet de voir le sac (objets + argent) d'un autre utilisateur.",
+            "description": "Permet de voir le sac (objets + argent) d'un autre "
+            "utilisateur.",
         },
         "timemute": {
             "name": "Attaque DDOS",
             "price": 999,
-            "description": "Mute un utilisateur ≥ lvl 10 pendant 10 min. Usage limité à 1/jour par cible.",
+            "description": "Mute un utilisateur ≥ lvl 10 pendant 10 min. "
+            "Usage limité à 1/jour par cible.",
         },
     }
 

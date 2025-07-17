@@ -1,4 +1,3 @@
-# Fichier réécrit à 100%
 """Fonctions utilitaires et calculs mathématiques.
 
 Ce module contient la logique de calcul de la courbe de progression "Spline Unifiée",
@@ -45,7 +44,8 @@ def get_unified_xp_table() -> np.ndarray:
         200 / (1 + PHI * n) for n in range(1, CIBLE_MESSAGES_PER_DAY + 1)
     )
     logger.info(
-        f"[Spline] Gain journalier de référence (Cible) calculé: {daily_xp_cible:.2f} XP/jour"
+        f"[Spline] Gain journalier de référence (Cible) calculé: "
+        f"{daily_xp_cible:.2f} XP/jour"
     )
 
     # --- Étape 2: Création de la fonction Spline qui modélise le temps ---
@@ -65,7 +65,8 @@ def get_unified_xp_table() -> np.ndarray:
     # XP_CUM_TABLE[1] = seuil pour atteindre le niveau 1.
     final_table = np.insert(xp_cumulative_table, 0, 0)
     logger.info(
-        f"[Spline] Table d'XP Unifiée générée. XP pour Lvl 100: {final_table[-1]:,.0f} XP"
+        f"[Spline] Table d'XP Unifiée générée. "
+        f"XP pour Lvl 100: {final_table[-1]:,.0f} XP"
     )
     return final_table
 

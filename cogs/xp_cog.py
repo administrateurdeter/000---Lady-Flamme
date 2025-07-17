@@ -1,4 +1,3 @@
-# Fichier réécrit à 100%
 """Cog gérant la logique de gain d'XP, niveaux et récompenses.
 
 Ce module contient le listener on_message qui est le cœur du système de
@@ -76,10 +75,10 @@ class XPCog(commands.Cog):
             self._cache[uid] = fetch_user(uid)
         user = self._cache[uid]
 
-        # Le cooldown est géré par 'last_ts' qui est mis à jour à la fin
         if (
-            now - user.get("last_ts", datetime.min)
-        ).total_seconds() < XPConfig.COOLDOWN:
+            (now - user.get("last_ts", datetime.min)).total_seconds()
+            < XPConfig.COOLDOWN
+        ):
             return
 
         if user.get("nick") != msg.author.display_name:
@@ -114,8 +113,6 @@ class XPCog(commands.Cog):
             old_level = user.get("level", 0)
             new_level = old_level
 
-            # La boucle vérifie si l'XP de l'utilisateur dépasse le seuil du NIVEAU SUIVANT
-            # en utilisant la table pré-calculée. Gère les multi-level ups.
             while new_level < MAX_LEVEL and user["xp"] >= XP_CUM_TABLE[new_level + 1]:
                 new_level += 1
 
@@ -150,7 +147,8 @@ class XPCog(commands.Cog):
                             )
                         except discord.Forbidden:
                             logger.warning(
-                                f"Permissions manquantes pour ajouter le rôle {StyleConfig.ROLE_CITIZEN} à {msg.author.name}"
+                                f"Permissions manquantes pour ajouter le rôle "
+                                f"{StyleConfig.ROLE_CITIZEN} à {msg.author.name}"
                             )
 
         # --- Étape 5: Finalisation ---

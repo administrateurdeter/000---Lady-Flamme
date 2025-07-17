@@ -29,7 +29,7 @@ def test_xp_cum_table_generation():
     assert XP_CUM_TABLE[0] == 0
 
     # --- Vérification 3: La monotonie ---
-    # La table doit être strictement croissante (chaque niveau coûte plus que le précédent)
+    # La table doit être strictement croissante
     assert np.all(np.diff(XP_CUM_TABLE) > 0)
 
 
@@ -69,7 +69,7 @@ def test_calculer_bonus_de_palier():
 
 
 def test_make_progress_bar():
-    """Vérifie que la barre de progression est générée correctement (test de non-régression)."""
+    """Vérifie que la barre de progression est générée correctement."""
     assert make_progress_bar(0, 100, length=12) == "[░░░░░░░░░░░░]"
     assert make_progress_bar(50, 100, length=12) == "[██████░░░░░░]"
     assert make_progress_bar(100, 100, length=12) == "[████████████]"

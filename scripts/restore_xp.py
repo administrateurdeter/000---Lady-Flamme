@@ -14,8 +14,8 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 
-from db import fetch_user, save_user
-from utils import total_xp_to_level
+from db import fetch_user, save_user  # noqa: E402
+from utils import total_xp_to_level  # noqa: E402
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -64,7 +64,8 @@ def main():
             save_user(user_data)
 
             logging.info(
-                f"✅ Succès pour {user_name} (ID: {user_id}): XP mis à {target_xp}, Niveau mis à {user_data['level']}."
+                f"✅ Succès pour {user_name} (ID: {user_id}): "
+                f"XP mis à {target_xp}, Niveau mis à {user_data['level']}."
             )
 
         except Exception as e:

@@ -58,8 +58,11 @@ class CommandsCog(commands.Cog):
 
         embed = discord.Embed(
             title=f"{VisualConfig.EMOJIS['trophy']} Leaderboard XP",
-            description=f"Consultez le [classement complet sur le site web]({BotConfig.WEB_URL}) !",
-            colour=VisualConfig.THEME_COLOR,  # <-- MODIFICATION: Utilisation de la couleur du thème
+            description=(
+                "Consultez le [classement complet sur le site web]"
+                f"({BotConfig.WEB_URL}) !"
+            ),
+            colour=VisualConfig.THEME_COLOR,
         )
 
         for idx, user_data in enumerate(lb_data[:10], start=1):
@@ -106,20 +109,19 @@ class CommandsCog(commands.Cog):
 
         bar = make_progress_bar(cur, needed)
 
-        # --- MODIFICATION: Arrondir les valeurs d'XP pour l'affichage ---
         display_cur = int(cur)
         display_needed = int(needed)
 
         embed = discord.Embed(
             title=f"📊 Rang de {target.display_name}",
-            colour=VisualConfig.THEME_COLOR,  # <-- MODIFICATION: Utilisation de la couleur du thème
+            colour=VisualConfig.THEME_COLOR,
         )
         embed.set_thumbnail(url=target.display_avatar.url)
         embed.add_field(name="Niveau", value=str(lvl), inline=True)
         embed.add_field(name="XP totale", value=f"{xp:,}", inline=True)
         embed.add_field(
             name=f"Progression vers {lvl+1}",
-            value=f"{display_cur:,}/{display_needed:,} XP\n{bar}",  # <-- MODIFICATION: Utilisation des valeurs arrondies
+            value=f"{display_cur:,}/{display_needed:,} XP\n{bar}",
             inline=False,
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -140,7 +142,7 @@ class CommandsCog(commands.Cog):
         embed = discord.Embed(
             title=f"🎒 Sac de {interaction.user.display_name}",
             description=text,
-            colour=VisualConfig.THEME_COLOR,  # <-- MODIFICATION: Cohérence de la couleur
+            colour=VisualConfig.THEME_COLOR,
         )
         embed.set_thumbnail(url=interaction.user.display_avatar.url)
         await interaction.response.send_message(embed=embed, ephemeral=True)

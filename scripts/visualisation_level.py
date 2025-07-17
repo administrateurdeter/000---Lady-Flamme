@@ -73,15 +73,20 @@ st.title("Le Chef-d'Œuvre : Visualisation du Modèle Spline Unifié")
 
 st.markdown(
     """
-    **Admirez ce système. Chaque courbe prouve que toutes les contraintes sont respectées :**
+    **Admirez ce système. Chaque courbe prouve que toutes les contraintes sont
+    respectées :**
 
-    - Le profil **P99** doit mettre environ **2,5 ans** pour atteindre le niveau 100.
-    - Le profil **Médiane** (5 msg/j) doit mettre environ **6 ans** pour atteindre le niveau 100.
+    - Le profil **P99** doit mettre environ **2,5 ans** pour atteindre le
+      niveau 100.
+    - Le profil **Médiane** (5 msg/j) doit mettre environ **6 ans** pour
+      atteindre le niveau 100.
     - Le **ratio P90 / P99** doit rester maîtrisé (**inférieur à 1,8**).
     - Le joueur cible doit atteindre le **niveau 5 en environ 2,5 jours**.
     - Le joueur cible doit atteindre le **niveau 15 en environ 16 jours**.
-    - Il ne doit y avoir **aucun gap brutal** ou mur de difficulté : la progression doit rester **organique et fluide**.
-    - Le **temps nécessaire pour passer un niveau doit toujours augmenter** de manière cohérente.
+    - Il ne doit y avoir **aucun gap brutal** ou mur de difficulté : la
+      progression doit rester **organique et fluide**.
+    - Le **temps nécessaire pour passer un niveau doit toujours augmenter** de
+      manière cohérente.
     """
 )
 
@@ -112,7 +117,9 @@ st.header("Les Courbes de la Progression")
 # Graphique 1: La Courbe du Ressenti
 st.subheader("La Courbe du Ressenti (Jours par Niveau)")
 st.markdown(
-    f"Cette courbe montre le temps nécessaire pour passer chaque niveau pour le profil **{selected_profile_name}**. Observez sa montée parfaitement lisse et continue."
+    f"Cette courbe montre le temps nécessaire pour passer chaque niveau pour le "
+    f"profil **{selected_profile_name}**. Observez sa montée parfaitement lisse "
+    "et continue."
 )
 
 chart_days_per_level = (
@@ -137,7 +144,8 @@ st.altair_chart(chart_days_per_level, use_container_width=True)
 # Graphique 2: La Courbe du Voyage
 st.subheader("La Courbe du Voyage (XP Cumulé Total)")
 st.markdown(
-    "Cette courbe représente la montagne d'XP totale à gravir. C'est l'effort cumulé pour atteindre chaque niveau."
+    "Cette courbe représente la montagne d'XP totale à gravir. "
+    "C'est l'effort cumulé pour atteindre chaque niveau."
 )
 
 chart_xp_cum = (
