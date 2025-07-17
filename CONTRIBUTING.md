@@ -6,10 +6,10 @@ Merci de votre intérêt pour ce projet ! Pour garantir la qualité et la cohér
 
 Le projet suit des normes de codage strictes pour assurer sa lisibilité et sa maintenabilité. Avant de soumettre votre code, veuillez vous assurer qu'il respecte les points suivants :
 
-1.  **Formatage avec `black` :** Tout le code doit être formaté avec `black` en utilisant la configuration du projet (`line-length = 88`).
+1.  **Formatage avec `black` :** Tout le code doit être formaté avec `black`.
 2.  **Linting avec `flake8` :** Le code ne doit générer aucune erreur `flake8`.
-3.  **Typage Statique avec `mypy` :** Bien que non strict, nous encourageons l'ajout d'annotations de type partout où c'est possible.
-4.  **Documentation :** Toute nouvelle fonction ou classe doit être documentée en suivant le format des docstrings Google (voir les fichiers existants pour des exemples).
+3.  **Typage Statique avec `mypy` :** Nous encourageons l'ajout d'annotations de type partout où c'est possible.
+4.  **Documentation :** Toute nouvelle fonction ou classe doit être documentée en suivant le format des docstrings Google.
 
 Vous pouvez vérifier votre code localement en lançant :
 

@@ -119,7 +119,7 @@ class CommandsCog(commands.Cog):
         embed.add_field(name="XP totale", value=f"{xp:,}", inline=True)
         embed.add_field(
             name=f"Progression vers {lvl+1}",
-            value=f"{display_cur:,}/{display_needed:,} XP\n{bar}", # <-- MODIFICATION: Utilisation des valeurs arrondies
+            value=f"{display_cur:,}/{display_needed:,} XP\n{bar}",  # <-- MODIFICATION: Utilisation des valeurs arrondies
             inline=False,
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -140,7 +140,7 @@ class CommandsCog(commands.Cog):
         embed = discord.Embed(
             title=f"🎒 Sac de {interaction.user.display_name}",
             description=text,
-            colour=VisualConfig.THEME_COLOR, # <-- MODIFICATION: Cohérence de la couleur
+            colour=VisualConfig.THEME_COLOR,  # <-- MODIFICATION: Cohérence de la couleur
         )
         embed.set_thumbnail(url=interaction.user.display_avatar.url)
         await interaction.response.send_message(embed=embed, ephemeral=True)

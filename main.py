@@ -77,7 +77,11 @@ async def main() -> None:
     # --- Chargement dynamique des cogs ---
     for filename in os.listdir("cogs"):
         # --- MODIFICATION: Ajout d'une condition pour ignorer l'economy_cog ---
-        if filename.endswith(".py") and not filename.startswith("__") and filename != "economy_cog.py":
+        if (
+            filename.endswith(".py")
+            and not filename.startswith("__")
+            and filename != "economy_cog.py"
+        ):
             extension = f"cogs.{filename[:-3]}"
             try:
                 await bot.load_extension(extension)
