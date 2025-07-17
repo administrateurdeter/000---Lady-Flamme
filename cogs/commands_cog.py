@@ -1,4 +1,3 @@
-# Fichier réécrit à 100%
 """Cog pour les commandes utilisateur de base (leaderboard, rank, sac)."""
 
 import logging
@@ -60,7 +59,7 @@ class CommandsCog(commands.Cog):
         embed = discord.Embed(
             title=f"{VisualConfig.EMOJIS['trophy']} Leaderboard XP",
             description=f"Consultez le [classement complet sur le site web]({BotConfig.WEB_URL}) !",
-            colour=VisualConfig.COLORS["info"],
+            colour=VisualConfig.THEME_COLOR,  # <-- MODIFICATION: Utilisation de la couleur du thème
         )
 
         for idx, user_data in enumerate(lb_data[:10], start=1):
@@ -96,32 +95,31 @@ class CommandsCog(commands.Cog):
         data = fetch_user(target.id)
         lvl, xp = data.get("level", 0), data.get("xp", 0)
 
-        # Calcul de la progression en utilisant la table d'XP "Spline Unifiée"
         if lvl < MAX_LEVEL:
-            # XP nécessaire pour le niveau actuel (borne inférieure)
             xmin = XP_CUM_TABLE[lvl]
-            # XP nécessaire pour le niveau suivant (borne supérieure)
             xmax = XP_CUM_TABLE[lvl + 1]
-            # XP gagné depuis le début du niveau actuel
             cur = xp - xmin
-            # XP total à gagner dans ce niveau
             needed = xmax - xmin
-        else:  # Niveau max atteint
+        else:
             cur = 1
             needed = 1
 
         bar = make_progress_bar(cur, needed)
 
+        # --- MODIFICATION: Arrondir les valeurs d'XP pour l'affichage ---
+        display_cur = int(cur)
+        display_needed = int(needed)
+
         embed = discord.Embed(
             title=f"📊 Rang de {target.display_name}",
-            colour=VisualConfig.COLORS["info"],
+            colour=VisualConfig.THEME_COLOR,  # <-- MODIFICATION: Utilisation de la couleur du thème
         )
         embed.set_thumbnail(url=target.display_avatar.url)
         embed.add_field(name="Niveau", value=str(lvl), inline=True)
         embed.add_field(name="XP totale", value=f"{xp:,}", inline=True)
         embed.add_field(
             name=f"Progression vers {lvl+1}",
-            value=f"{cur:,}/{needed:,} XP\n{bar}",
+            value=f"{display_cur:,}/{display_needed:,} XP\n{bar}", # <-- MODIFICATION: Utilisation des valeurs arrondies
             inline=False,
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -142,7 +140,7 @@ class CommandsCog(commands.Cog):
         embed = discord.Embed(
             title=f"🎒 Sac de {interaction.user.display_name}",
             description=text,
-            colour=VisualConfig.COLORS["info"],
+            colour=VisualConfig.THEME_COLOR, # <-- MODIFICATION: Cohérence de la couleur
         )
         embed.set_thumbnail(url=interaction.user.display_avatar.url)
         await interaction.response.send_message(embed=embed, ephemeral=True)

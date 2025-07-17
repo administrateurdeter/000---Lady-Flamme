@@ -43,6 +43,7 @@
         padding: 12px 15px;
         text-align: left;
         border-bottom: 1px solid #ddd;
+        vertical-align: middle; /* Aligne verticalement le contenu */
       }
       th {
         background-color: #fe6a33;
@@ -70,6 +71,30 @@
       }
       .user-info span {
         font-weight: bold;
+      }
+
+      /* --- Barre de progression --- */
+      .progress-bar-container {
+        width: 100%;
+        background-color: #e0e0e0;
+        border-radius: 4px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        position: relative;
+      }
+      .progress-bar-fill {
+        background-color: #fe6a33;
+        height: 100%;
+        border-radius: 4px;
+      }
+      .progress-bar-text {
+        position: absolute;
+        width: 100%;
+        text-align: center;
+        color: #fff;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
       }
 
       /* --- Contrôles de Pagination --- */
@@ -115,12 +140,23 @@
             <td><strong>#{{ idx }}</strong></td>
             <td>
               <div class="user-info">
-                <img src="{{ e.avatar }}" width="40" alt="avatar" />
+                <img src="{{ e.avatar }}" width="40" height="40" alt="avatar" />
                 <span>{{ e.name }}</span>
               </div>
             </td>
             <td>Niveau {{ e.level }}</td>
-            <td>{{ e.percent }}%</td>
+            <td>
+              <div class="progress-bar-container">
+                <div class="progress-bar-text">{{ e.percent }}%</div>
+                <!-- 
+                  NOTE POUR LES DÉVELOPPEURS : 
+                  L'erreur de linter CSS sur la ligne suivante est un faux positif.
+                  Le linter ne comprend pas la syntaxe de template Jinja2 {{ ... }}.
+                  Le code est fonctionnellement correct et sera rendu correctement par le serveur.
+                -->
+                <div class="progress-bar-fill" style="width: {{ e.percent }}%;"></div>
+              </div>
+            </td>
           </tr>
           {% endfor %}
         </tbody>

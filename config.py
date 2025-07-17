@@ -1,4 +1,3 @@
-# Fichier réécrit à 100%
 """Fichier de configuration centralisé.
 
 Ce module charge les variables d'environnement et définit les constantes
@@ -118,6 +117,7 @@ class EconomyConfig:
 class VisualConfig:
     """Codes couleur et émojis pour les embeds & logs."""
 
+    THEME_COLOR: int = 0xFE6A33
     COLORS: dict[str, int] = {
         "error": 0xE74C3C,
         "warning": 0xF1C40F,
