@@ -23,6 +23,7 @@ class BotConfig:
     DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
     DB_TNS_NAME: str = os.getenv("DB_TNS_NAME", "")
     WALLET_LOCATION: str = os.getenv("WALLET_LOCATION", "")
+    WALLET_PASSWORD: str = os.getenv("WALLET_PASSWORD", "")
 
     # --- Configuration Web & Logs ---
     WEB_URL: str = os.getenv("WEB_URL", "http://127.0.0.1:3000/leaderboard")

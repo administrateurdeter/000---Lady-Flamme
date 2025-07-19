@@ -32,7 +32,7 @@ engine = create_engine(
         "dsn": dsn,
         "config_dir": BotConfig.WALLET_LOCATION,
         "wallet_location": BotConfig.WALLET_LOCATION,
-        "wallet_password": None,
+        "wallet_password": BotConfig.WALLET_PASSWORD,
     },
     future=True,
 )
