@@ -10,21 +10,17 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List
 
-from sqlalchemy import (
-    create_engine,
-    DateTime,
-    Integer,
-    JSON,
-    select,
-    String,
-)
-from sqlalchemy.orm import (
-    DeclarativeBase,  # Utilisation de la base moderne pour le typage
-    Mapped,
-    mapped_column,
-    Session,
-    sessionmaker,
-)
+from sqlalchemy import create_engine
+from sqlalchemy import DateTime
+from sqlalchemy import Integer
+from sqlalchemy import JSON
+from sqlalchemy import select
+from sqlalchemy import String
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import Session
+from sqlalchemy.orm import sessionmaker
 
 # --- Configuration du moteur de base de données ---
 _RAW_DB_URL = os.getenv("DATABASE_URL", "")
@@ -46,9 +42,10 @@ engine = create_engine(
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
-# --- CORRECTION MYPY DÉFINITIVE : Déclaration de la base 100% compatible ---
+# --- Déclaration de la base compatible avec mypy ---
 class Base(DeclarativeBase):
     """Classe de base pour les modèles SQLAlchemy, compatible avec mypy."""
+
     pass
 
 
@@ -66,7 +63,6 @@ class User(Base):
 
 
 try:
-    # Cette ligne fonctionne maintenant car Base est correctement typée.
     Base.metadata.create_all(bind=engine)
 except Exception as e:
     logging.error(f"Erreur de connexion à la base de données: {e}")
@@ -115,7 +111,6 @@ def fetch_user(user_id: int) -> Dict[str, Any]:
     with get_session() as session:
         user = session.get(User, user_id)
         if not user:
-            # Cette ligne fonctionne maintenant car User hérite d'un __init__ valide.
             user = User(user_id=user_id, xp=0, level=0, coins=0, items=[])
             session.add(user)
             session.commit()
