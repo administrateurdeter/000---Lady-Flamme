@@ -22,6 +22,7 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
+
 # --- Configuration du moteur de base de données ---
 _RAW_DB_URL = os.getenv("DATABASE_URL", "")
 if (
