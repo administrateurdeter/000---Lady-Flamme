@@ -30,13 +30,9 @@ class XPConfig:
 
     # --- Constantes du modèle "Spline Unifiée" ---
     MAX_LEVEL: int = 100
-    # Constante PHI qui régit l'écart de gain entre les joueurs
     PHI: float = 0.5
-    # Profil de référence pour le calcul de la courbe (messages/jour)
     CIBLE_MESSAGES_PER_DAY: int = 10
-    # Piliers de la courbe de "ressenti" (Niveaux)
     KNOT_LEVELS: list[int] = [1, 15, 60, 100]
-    # Valeurs de "ressenti" associées aux piliers (Jours/Niveau pour la Cible)
     OPTIMAL_KNOT_VALUES: list[float] = [0.2, 1.8, 18, 85]
 
     # Constantes pour le gain d'or par message ("salaire" quotidien)
@@ -47,11 +43,10 @@ class XPConfig:
 class StyleConfig:
     """Constantes liées aux messages, rôles et emojis."""
 
-    # Emoji utilisé dans les messages de level-up.
     EMOJI_LEVEL_UP: str = "🎉"
 
     LEVEL_UP_MESSAGES: list[str] = [
-        "te voilà plus flamboyant·e que jamais, l’aventure ne fait que commencer !",
+        "te voilà plus flamboyant·e que jamais, " "l’aventure ne fait que commencer !",
         "la chaleur de ta détermination illumine désormais un nouveau niveau.",
         "ta légende s’écrit doucement dans les nuages. Continuons à monter !",
         "tu franchis les cieux avec élégance, j’admire ta progression !",
@@ -86,7 +81,6 @@ class StyleConfig:
 class EconomyConfig:
     """Définit les objets disponibles à l'achat dans la boutique du bot."""
 
-    # Les prix sont des exemples et devront être équilibrés.
     ITEMS: dict[str, dict[str, object]] = {
         "temp_nick_self": {
             "name": "Changement de Pseudo (Personnel, 2h)",
@@ -144,9 +138,6 @@ class VisualConfig:
 class SecurityConfig:
     """Configuration liée à la sécurité et à la modération des pseudos."""
 
-    # Cette liste brute est utilisée par `utils.py` pour construire un filtre regex.
-    # Elle est spécifiquement destinée à la validation des pseudos lors d'un changement
-    # et n'affecte pas les messages du chat.
     FORBIDDEN_NICKNAME_WORDS_RAW: tuple[str, ...] = (
         "attarde",
         "attardee",

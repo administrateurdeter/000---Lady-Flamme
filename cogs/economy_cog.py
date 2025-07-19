@@ -7,8 +7,9 @@ from discord import app_commands
 from discord.ext import commands
 
 from config import BotConfig, EconomyConfig, VisualConfig
-from economy_service import EconomyService, InsufficientFunds
-from utils import is_nickname_valid  # Importation du nouveau filtre
+from economy_service import EconomyService  # 'InsufficientFunds' a été retiré
+
+# 'is_nickname_valid' a été retiré car non utilisé pour le moment
 
 logger = logging.getLogger(__name__)
 
@@ -68,11 +69,6 @@ class EconomyCog(commands.Cog):
             return
 
         # --- Logique d'achat à implémenter ---
-        # Cette section sera développée pour gérer chaque objet.
-        # Par exemple, pour un achat de pseudo, il faudrait ouvrir un Modal,
-        # récupérer le texte, le valider avec is_nickname_valid,
-        # déduire l'argent et appliquer le changement.
-
         embed = discord.Embed(
             title="✅ Commande Reçue",
             description=(
