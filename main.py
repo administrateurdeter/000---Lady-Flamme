@@ -43,13 +43,16 @@ async def main() -> None:
         )
         sys.exit(1)
 
-    try:
-        int(os.getenv("GUILD_ID"))
-    except (TypeError, ValueError):
+    # --- CORRECTION MYPY: Validation explicite pour le type de GUILD_ID ---
+    guild_id_str = os.getenv("GUILD_ID")
+    if not guild_id_str or not guild_id_str.isdigit():
         logger.critical(
             "La variable d'environnement GUILD_ID doit être un entier valide."
         )
         sys.exit(1)
+
+    # À ce stade, mypy sait que guild_id_str est une chaîne de chiffres.
+    guild_id = int(guild_id_str)
 
     # --- Configuration des Intents Discord ---
     intents = discord.Intents.default()
@@ -61,27 +64,19 @@ async def main() -> None:
     async def on_ready() -> None:
         """Événement déclenché lorsque le bot est connecté et prêt."""
         if not bot.user:
-            # Cette assertion est une sécurité, bien que peu probable.
             logger.critical("bot.user est None après la connexion. Arrêt.")
             return
 
         logger.info(f"Connecté comme {bot.user.name} (ID: {bot.user.id})")
         try:
-            synced: List[Any] = await bot.tree.sync(
-                guild=discord.Object(id=BotConfig.GUILD_ID)
-            )
+            synced: List[Any] = await bot.tree.sync(guild=discord.Object(id=guild_id))
             logger.info(f"{len(synced)} slash commands synchronisées pour la guilde.")
         except Exception as e:
             logger.error("Erreur de synchronisation des slash commands", exc_info=e)
 
     # --- Chargement dynamique des cogs ---
     for filename in os.listdir("cogs"):
-        # --- MODIFICATION: Ajout d'une condition pour ignorer l'economy_cog ---
-        if (
-            filename.endswith(".py")
-            and not filename.startswith("__")
-            and filename != "economy_cog.py"
-        ):
+        if filename.endswith(".py") and not filename.startswith("__"):
             extension = f"cogs.{filename[:-3]}"
             try:
                 await bot.load_extension(extension)

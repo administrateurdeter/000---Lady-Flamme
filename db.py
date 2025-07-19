@@ -11,16 +11,23 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from sqlalchemy import (
-    Column,
+    create_engine,
     DateTime,
     Integer,
     JSON,
-    String,
-    create_engine,
     select,
+    String,
 )
-from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import Session, declarative_base, sessionmaker
+
+# L'import de 'Column' a été retiré car il n'est plus utilisé après le passage
+# à la syntaxe moderne de SQLAlchemy pour la compatibilité mypy.
+from sqlalchemy.orm import (
+    declarative_base,
+    Mapped,
+    mapped_column,
+    Session,
+    sessionmaker,
+)
 
 # --- Configuration du moteur de base de données ---
 _RAW_DB_URL = os.getenv("DATABASE_URL", "")
@@ -29,7 +36,6 @@ if (
     or _RAW_DB_URL.lower().startswith("sqlite:///")
     or "://" not in _RAW_DB_URL
 ):
-    # Fallback vers une base de données en mémoire si l'URL est invalide ou non fournie.
     _DB_URL = "sqlite:///:memory:"
 else:
     _DB_URL = _RAW_DB_URL
@@ -41,27 +47,32 @@ engine = create_engine(
 )
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
-Base = declarative_base()
+
+
+# --- Déclaration de la base compatible avec mypy ---
+class Base:
+    pass
+
+
+Base = declarative_base(cls=Base)
 
 
 class User(Base):
     """Modèle de données représentant un utilisateur dans la base."""
 
     __tablename__ = "users"
-    user_id = Column(Integer, primary_key=True, index=True)
-    nick = Column(String, nullable=True)
-    xp = Column(Integer, default=0, nullable=False)
-    level = Column(Integer, default=0, nullable=False)
-    coins = Column(Integer, default=0, nullable=False)
-    items = Column(JSON, default=lambda: [])
-    last_daily = Column(DateTime, default=None, nullable=True)
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    nick: Mapped[str] = mapped_column(String, nullable=True)
+    xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    level: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    coins: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    items: Mapped[list] = mapped_column(JSON, default=lambda: [])
+    last_daily: Mapped[datetime] = mapped_column(DateTime, default=None, nullable=True)
 
 
 try:
-    # Crée les tables si elles n'existent pas.
     Base.metadata.create_all(bind=engine)
-except OperationalError as e:
-    # Gère le cas où la base de données n'est pas encore prête.
+except Exception as e:
     logging.error(f"Erreur de connexion à la base de données: {e}")
 
 
@@ -69,8 +80,6 @@ def get_session() -> Session:
     """Crée et retourne une nouvelle session SQLAlchemy."""
     return SessionLocal()
 
-
-# --- Fonctions d'accès et de manipulation des données ---
 
 _leaderboard_cache: List[Dict[str, Any]] = []
 _last_cache_time: datetime = datetime.min
@@ -106,14 +115,7 @@ def get_leaderboard_from_cache() -> List[Dict[str, Any]]:
 
 
 def fetch_user(user_id: int) -> Dict[str, Any]:
-    """Récupère un utilisateur par son ID, le crée s'il n'existe pas.
-
-    Args:
-        user_id: L'ID Discord de l'utilisateur.
-
-    Returns:
-        Un dictionnaire représentant les données de l'utilisateur.
-    """
+    """Récupère un utilisateur par son ID, le crée s'il n'existe pas."""
     with get_session() as session:
         user = session.get(User, user_id)
         if not user:
@@ -134,12 +136,7 @@ def fetch_user(user_id: int) -> Dict[str, Any]:
 
 
 def save_user(data: Dict[str, Any]) -> None:
-    """Sauvegarde les données d'un dictionnaire utilisateur en base.
-
-    Args:
-        data: Le dictionnaire contenant les données de l'utilisateur.
-              Doit inclure 'user_id'.
-    """
+    """Sauvegarde les données d'un dictionnaire utilisateur en base."""
     with get_session() as session:
         user = session.get(User, data["user_id"])
         if user:
@@ -150,18 +147,8 @@ def save_user(data: Dict[str, Any]) -> None:
 
 
 def atomic_purchase(user_id: int, item_name: str, price: int) -> tuple[bool, str]:
-    """Effectue un achat dans une transaction atomique pour éviter les race conditions.
-
-    Args:
-        user_id: L'ID de l'acheteur.
-        item_name: Le nom de l'objet acheté.
-        price: Le prix de l'objet.
-
-    Returns:
-        Un tuple (succès, message).
-    """
+    """Effectue un achat dans une transaction atomique."""
     with get_session() as session:
-        # Verrouille la ligne de l'utilisateur pour la durée de la transaction.
         user = session.get(User, user_id, with_for_update=True)
 
         if not user:
@@ -170,10 +157,10 @@ def atomic_purchase(user_id: int, item_name: str, price: int) -> tuple[bool, str
         if user.coins < price:
             return False, f"Solde insuffisant. Vous avez {user.coins} Ignis."
 
-        user.coins -= price
         current_items = list(user.items) if user.items is not None else []
         current_items.append(item_name)
         user.items = current_items
+        user.coins -= price
 
         session.commit()
         return True, "Achat réussi !"
