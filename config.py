@@ -14,10 +14,19 @@ load_dotenv()
 class BotConfig:
     """Paramètres essentiels pour la connexion du bot et à la base de données."""
 
+    # --- Configuration Discord ---
     BOT_TOKEN: str = os.getenv("DISCORD_BOT_TOKEN", "")
     GUILD_ID: int = int(os.getenv("GUILD_ID", "0"))
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "")
+
+    # --- NOUVELLE CONFIGURATION POUR ORACLE CLOUD ---
+    DB_USER: str = os.getenv("DB_USER", "ADMIN")
+    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
+    DB_TNS_NAME: str = os.getenv("DB_TNS_NAME", "")
+    WALLET_LOCATION: str = os.getenv("WALLET_LOCATION", "")
+
+    # --- Configuration Web & Logs ---
     WEB_URL: str = os.getenv("WEB_URL", "http://127.0.0.1:3000/leaderboard")
+    LOGS_SECRET_KEY: str = os.getenv("LOGS_SECRET_KEY", "")
 
 
 class XPConfig:

@@ -34,8 +34,14 @@ async def main() -> None:
     setup_logging()
     logger = logging.getLogger("main")
 
-    # --- Validation des variables d'environnement ---
-    required_vars = ["DISCORD_BOT_TOKEN", "GUILD_ID", "DATABASE_URL"]
+    # --- NOUVELLE VALIDATION DES VARIABLES D'ENVIRONNEMENT POUR ORACLE ---
+    required_vars = [
+        "DISCORD_BOT_TOKEN",
+        "GUILD_ID",
+        "DB_PASSWORD",
+        "DB_TNS_NAME",
+        "WALLET_LOCATION",
+    ]
     missing_vars = [v for v in required_vars if not os.getenv(v)]
     if missing_vars:
         logger.critical(

@@ -6,27 +6,34 @@ Il inclut également un système de cache pour le leaderboard.
 """
 
 import logging
-import os
 from datetime import datetime
 from typing import Any, Dict, List
 
 from sqlalchemy import create_engine, DateTime, Integer, JSON, select, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session, sessionmaker
 
-# --- Configuration du moteur de base de données ---
-_RAW_DB_URL = os.getenv("DATABASE_URL", "")
-if (
-    not _RAW_DB_URL
-    or _RAW_DB_URL.lower().startswith("sqlite:///")
-    or "://" not in _RAW_DB_URL
-):
-    _DB_URL = "sqlite:///:memory:"
-else:
-    _DB_URL = _RAW_DB_URL
+from config import BotConfig  # On importe la configuration centralisée
 
+# --- NOUVELLE CONFIGURATION DU MOTEUR POUR ORACLE CLOUD ---
+# Vérification que les variables critiques sont définies
+if not all([BotConfig.DB_PASSWORD, BotConfig.DB_TNS_NAME, BotConfig.WALLET_LOCATION]):
+    raise ValueError(
+        "Les variables d'environnement DB_PASSWORD, DB_TNS_NAME, et "
+        "WALLET_LOCATION doivent être définies."
+    )
+
+# Construction de la chaîne de connexion (DSN) pour Oracle
+dsn = f"{BotConfig.DB_USER}/{BotConfig.DB_PASSWORD}@{BotConfig.DB_TNS_NAME}"
+
+# Création du moteur SQLAlchemy pour Oracle
 engine = create_engine(
-    _DB_URL,
-    connect_args={"check_same_thread": False} if _DB_URL.startswith("sqlite") else {},
+    f"oracle+oracledb://",
+    connect_args={
+        "dsn": dsn,
+        "config_dir": BotConfig.WALLET_LOCATION,
+        "wallet_location": BotConfig.WALLET_LOCATION,
+        "wallet_password": None,
+    },
     future=True,
 )
 
