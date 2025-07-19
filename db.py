@@ -27,7 +27,7 @@ dsn = f"{BotConfig.DB_USER}/{BotConfig.DB_PASSWORD}@{BotConfig.DB_TNS_NAME}"
 
 # Création du moteur SQLAlchemy pour Oracle
 engine = create_engine(
-    f"oracle+oracledb://",
+    "oracle+oracledb://",  # <-- CORRECTION APPLIQUÉE ICI
     connect_args={
         "dsn": dsn,
         "config_dir": BotConfig.WALLET_LOCATION,
@@ -40,7 +40,7 @@ engine = create_engine(
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
-# --- Déclaration de la base compatible avec mypy ---
+# --- Le reste du fichier ne change pas ---
 class Base(DeclarativeBase):
     """Classe de base pour les modèles SQLAlchemy, compatible avec mypy."""
 
