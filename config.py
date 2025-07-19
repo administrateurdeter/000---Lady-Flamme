@@ -95,7 +95,9 @@ class EconomyConfig:
         "temp_color_self": {
             "name": "Couleur de Pseudo (24h)",
             "price": 150,
-            "description": "Obtenez une couleur de pseudo personnalisée pendant 24 heures.",
+            "description": (
+                "Obtenez une couleur de pseudo personnalisée pendant 24 heures."
+            ),
         },
         "perm_nick": {
             "name": "Permission: Changer son Pseudo (Permanent)",
