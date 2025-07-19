@@ -18,11 +18,8 @@ from sqlalchemy import (
     select,
     String,
 )
-
-# L'import de 'Column' a été retiré car il n'est plus utilisé après le passage
-# à la syntaxe moderne de SQLAlchemy pour la compatibilité mypy.
 from sqlalchemy.orm import (
-    declarative_base,
+    DeclarativeBase,  # Utilisation de la base moderne pour le typage
     Mapped,
     mapped_column,
     Session,
@@ -49,12 +46,10 @@ engine = create_engine(
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
-# --- Déclaration de la base compatible avec mypy ---
-class Base:
+# --- CORRECTION MYPY DÉFINITIVE : Déclaration de la base 100% compatible ---
+class Base(DeclarativeBase):
+    """Classe de base pour les modèles SQLAlchemy, compatible avec mypy."""
     pass
-
-
-Base = declarative_base(cls=Base)
 
 
 class User(Base):
@@ -62,15 +57,16 @@ class User(Base):
 
     __tablename__ = "users"
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    nick: Mapped[str] = mapped_column(String, nullable=True)
-    xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    level: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    coins: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    nick: Mapped[str | None] = mapped_column(String, nullable=True)
+    xp: Mapped[int] = mapped_column(Integer, default=0)
+    level: Mapped[int] = mapped_column(Integer, default=0)
+    coins: Mapped[int] = mapped_column(Integer, default=0)
     items: Mapped[list] = mapped_column(JSON, default=lambda: [])
-    last_daily: Mapped[datetime] = mapped_column(DateTime, default=None, nullable=True)
+    last_daily: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
 try:
+    # Cette ligne fonctionne maintenant car Base est correctement typée.
     Base.metadata.create_all(bind=engine)
 except Exception as e:
     logging.error(f"Erreur de connexion à la base de données: {e}")
@@ -119,7 +115,8 @@ def fetch_user(user_id: int) -> Dict[str, Any]:
     with get_session() as session:
         user = session.get(User, user_id)
         if not user:
-            user = User(user_id=user_id, nick=None, xp=0, level=0, coins=0, items=[])
+            # Cette ligne fonctionne maintenant car User hérite d'un __init__ valide.
+            user = User(user_id=user_id, xp=0, level=0, coins=0, items=[])
             session.add(user)
             session.commit()
             session.refresh(user)
