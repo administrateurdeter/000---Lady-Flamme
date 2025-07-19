@@ -47,8 +47,9 @@ class XPConfig:
 class StyleConfig:
     """Constantes liées aux messages, rôles et emojis."""
 
-    ROLE_CITIZEN: str = "Citoyen"
-    EMOJI_KERMIT: str = "🎉"
+    # Emoji utilisé dans les messages de level-up.
+    EMOJI_LEVEL_UP: str = "🎉"
+
     LEVEL_UP_MESSAGES: list[str] = [
         "te voilà plus flamboyant·e que jamais, l’aventure ne fait que commencer !",
         "la chaleur de ta détermination illumine désormais un nouveau niveau.",
@@ -85,34 +86,37 @@ class StyleConfig:
 class EconomyConfig:
     """Définit les objets disponibles à l'achat dans la boutique du bot."""
 
+    # Les prix sont des exemples et devront être équilibrés.
     ITEMS: dict[str, dict[str, object]] = {
-        "paypal": {
-            "name": "Action Meta",
-            "price": 59997,
-            "description": "Vous recevrez 5 € sur PayPal. (Usage unique)",
+        "temp_nick_self": {
+            "name": "Changement de Pseudo (Personnel, 2h)",
+            "price": 50,
+            "description": "Changez votre propre pseudo sur le serveur pour 2 heures.",
         },
-        "xp_bonus": {
-            "name": "Puce GPU",
-            "price": 1440,
-            "description": "Supprime la limite d'XP pendant 1 h. Cumulable ×5.",
+        "temp_nick_other": {
+            "name": "Changement de Pseudo (Ciblé, 2h)",
+            "price": 200,
+            "description": "Changez le pseudo d'un autre membre pour 2 heures.",
         },
-        "xp_block": {
-            "name": "Malware",
-            "price": 348,
-            "description": "Bloque la prise d'XP du prochain minuit au suivant. "
-            "(Non cumulable)",
+        "temp_color_self": {
+            "name": "Couleur de Pseudo (24h)",
+            "price": 150,
+            "description": "Obtenez une couleur de pseudo personnalisée pendant 24 heures.",
         },
-        "spy": {
-            "name": "Lunettes Meta",
-            "price": 20,
-            "description": "Permet de voir le sac (objets + argent) d'un autre "
-            "utilisateur.",
+        "perm_nick": {
+            "name": "Permission: Changer son Pseudo (Permanent)",
+            "price": 5000,
+            "description": "Achetez le droit de changer votre pseudo à volonté.",
         },
-        "timemute": {
-            "name": "Attaque DDOS",
-            "price": 999,
-            "description": "Mute un utilisateur ≥ lvl 10 pendant 10 min. "
-            "Usage limité à 1/jour par cible.",
+        "perm_emoji": {
+            "name": "Permission: Emojis Externes (Permanent)",
+            "price": 7500,
+            "description": "Achetez le droit d'utiliser des emojis externes.",
+        },
+        "perm_sticker": {
+            "name": "Permission: Autocollants Externes (Permanent)",
+            "price": 7500,
+            "description": "Achetez le droit d'utiliser des autocollants externes.",
         },
     }
 
@@ -135,3 +139,126 @@ class VisualConfig:
         "web": "🌐",
         "trophy": "🏆",
     }
+
+
+class SecurityConfig:
+    """Configuration liée à la sécurité et à la modération des pseudos."""
+
+    # Cette liste brute est utilisée par `utils.py` pour construire un filtre regex.
+    # Elle est spécifiquement destinée à la validation des pseudos lors d'un changement
+    # et n'affecte pas les messages du chat.
+    FORBIDDEN_NICKNAME_WORDS_RAW: tuple[str, ...] = (
+        "attarde",
+        "attardee",
+        "attardes",
+        "bamboula",
+        "bicot",
+        "bougnoule",
+        "broute gazon",
+        "broute_gazon",
+        "broute-gazon",
+        "broutegazon",
+        "chinetoque",
+        "crouille",
+        "debile mental",
+        "debile_mental",
+        "debile-mental",
+        "debilemental",
+        "dep",
+        "dp",
+        "encule",
+        "enculee",
+        "encules",
+        "face de citron",
+        "face_de_citron",
+        "face-de-citron",
+        "facedecitron",
+        "feuj",
+        "fiotte",
+        "gay",
+        "gays",
+        "goudou",
+        "gouine",
+        "grosse gouine",
+        "grosse_gouine",
+        "grosse-gouine",
+        "grossegouine",
+        "macaque",
+        "mongolien",
+        "negre",
+        "negree",
+        "negres",
+        "negro",
+        "negroide",
+        "niakoue",
+        "noiraud",
+        "payday",
+        "pd",
+        "pds",
+        "pedale",
+        "pure souche",
+        "pure_souche",
+        "pure-souche",
+        "puresouche",
+        "pute",
+        "race inferieure",
+        "race pure",
+        "race superieure",
+        "race_inferieure",
+        "race_pure",
+        "race_superieure",
+        "race-inferieure",
+        "race-pure",
+        "race-superieure",
+        "raceinferieure",
+        "racepure",
+        "racesuperieure",
+        "sale arabe",
+        "sale blanc",
+        "sale chretien",
+        "sale juif",
+        "sale musulman",
+        "sale noir",
+        "sale pede",
+        "sale_arabe",
+        "sale_blanc",
+        "sale_chretien",
+        "sale_juif",
+        "sale_musulman",
+        "sale_noir",
+        "sale_pede",
+        "sale-arabe",
+        "sale-blanc",
+        "sale-chretien",
+        "sale-juif",
+        "sale-musulman",
+        "sale-noir",
+        "sale-pede",
+        "salearabe",
+        "saleblanc",
+        "salechretien",
+        "salejuif",
+        "salemusulman",
+        "salenoir",
+        "salepede",
+        "salope",
+        "sous homme",
+        "sous race",
+        "sous_homme",
+        "sous_race",
+        "sous-homme",
+        "sous-race",
+        "soushomme",
+        "sousrace",
+        "tantouse",
+        "tapette",
+        "tarlouze",
+        "trainee",
+        "transpd",
+        "trisomique mental",
+        "trisomique_mental",
+        "trisomique-mental",
+        "trisomiquemental",
+        "youpin",
+        "youpine",
+    )

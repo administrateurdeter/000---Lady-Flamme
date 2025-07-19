@@ -117,7 +117,6 @@ class XPCog(commands.Cog):
 
                 bonus = calculer_bonus_de_palier(new_level)
                 if bonus > 0:
-                    user["coins"] += bonus
                     bonus_msg = (
                         f"\n💰 **PALIER {new_level} ATTEINT !** +{bonus:,} Ignis"
                     )
@@ -127,7 +126,7 @@ class XPCog(commands.Cog):
                 msg_text = random.choice(StyleConfig.LEVEL_UP_MESSAGES)
                 embed = discord.Embed(
                     title=f"{msg.author.display_name} → Niveau {new_level}",
-                    description=f"{msg_text}{StyleConfig.EMOJI_KERMIT}{bonus_msg}",
+                    description=f"{msg_text}{StyleConfig.EMOJI_LEVEL_UP}{bonus_msg}",
                     colour=0xFE6A33,
                 )
                 embed.set_thumbnail(url=msg.author.display_avatar.url)
@@ -135,20 +134,7 @@ class XPCog(commands.Cog):
 
             if new_level > old_level:
                 user["level"] = new_level
-                if old_level == 0 and isinstance(msg.author, discord.Member):
-                    role = discord.utils.get(
-                        msg.guild.roles, name=StyleConfig.ROLE_CITIZEN
-                    )
-                    if role and role not in msg.author.roles:
-                        try:
-                            await msg.author.add_roles(
-                                role, reason="Atteinte du premier niveau"
-                            )
-                        except discord.Forbidden:
-                            logger.warning(
-                                f"Permissions manquantes pour ajouter le rôle "
-                                f"{StyleConfig.ROLE_CITIZEN} à {msg.author.name}"
-                            )
+                # La logique d'assignation du rôle Citoyen a été supprimée ici.
 
         # --- Étape 5: Finalisation ---
         user["last_ts"] = now

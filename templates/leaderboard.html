@@ -148,12 +148,10 @@
             <td>
               <div class="progress-bar-container">
                 <div class="progress-bar-text">{{ e.percent }}%</div>
-                <!-- 
-                  NOTE POUR LES DÉVELOPPEURS : 
-                  L'erreur de linter CSS sur la ligne suivante est un faux positif.
-                  Le linter ne comprend pas la syntaxe de template Jinja2 {{ ... }}.
-                  Le code est fonctionnellement correct et sera rendu correctement par le serveur.
-                -->
+                {#
+                  CORRECTION : Le commentaire HTML a été remplacé par un commentaire Jinja
+                  pour éviter les erreurs de parsing du template.
+                #}
                 <div class="progress-bar-fill" style="width: {{ e.percent }}%;"></div>
               </div>
             </td>

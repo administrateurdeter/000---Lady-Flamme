@@ -6,12 +6,13 @@ pour des performances optimales.
 """
 
 import logging
+import re  # Ajout pour le filtre
 from typing import List
 
 import numpy as np
 from scipy.interpolate import CubicSpline
 
-from config import XPConfig
+from config import XPConfig, SecurityConfig  # Ajout pour le filtre
 
 logger = logging.getLogger(__name__)
 
@@ -135,3 +136,59 @@ def make_progress_bar(current: int, needed: int, length: int = 12) -> str:
     filled_length: int = int(length * percent)
     bar: str = "█" * filled_length + "░" * (length - filled_length)
     return f"[{bar}]"
+
+
+# ==============================================================================
+# NOUVEAU CODE AJOUTÉ SANS TOUCHER À L'ANCIEN
+# ==============================================================================
+
+# --- FILTRE DE VALIDATION DE PSEUDO ---
+
+
+def _build_profanity_regex() -> re.Pattern:
+    """Construit un regex à partir de la liste de mots de la configuration.
+
+    Cette fonction interne est appelée une seule fois au chargement du module
+    pour créer un filtre regex compilé et performant.
+
+    Returns:
+        Un objet regex compilé pour la validation des pseudos.
+    """
+    processed_words = set()
+    for word in SecurityConfig.FORBIDDEN_NICKNAME_WORDS_RAW:
+        normalized_word = re.sub(r"[\s_-]+", " ", word).strip()
+        if normalized_word:
+            processed_words.add(normalized_word)
+
+    patterns = []
+    for word in sorted(list(processed_words)):
+        escaped_word = re.escape(word)
+        flexible_word = escaped_word.replace(r"\ ", r"[\s_-]+")
+
+        # Utilise les "word boundaries" (\b) pour les mots courts ou ambigus
+        # afin d'éviter les faux positifs. Ex: \bgay\b ne matchera pas dans "gayette".
+        if len(word.replace(" ", "")) <= 3 or "gay" in word:
+            pattern = r"\b" + flexible_word + r"\b"
+        else:
+            pattern = flexible_word
+        patterns.append(pattern)
+
+    # Le regex final est insensible à la casse (majuscules/minuscules)
+    return re.compile("|".join(patterns), re.IGNORECASE)
+
+
+_PROFANITY_REGEX: re.Pattern = _build_profanity_regex()
+
+
+def is_nickname_valid(nickname: str) -> bool:
+    """Vérifie si un pseudo est valide en utilisant le filtre pré-compilé.
+
+    Args:
+        nickname: Le pseudo à valider.
+
+    Returns:
+        True si le pseudo est valide, False s'il contient un mot interdit.
+    """
+    if not nickname:
+        return False
+    return _PROFANITY_REGEX.search(nickname) is None
