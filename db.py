@@ -10,18 +10,8 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List
 
-from sqlalchemy import create_engine
-from sqlalchemy import DateTime
-from sqlalchemy import Integer
-from sqlalchemy import JSON
-from sqlalchemy import select
-from sqlalchemy import String
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import Session
-from sqlalchemy.orm import sessionmaker
-
+from sqlalchemy import create_engine, DateTime, Integer, JSON, select, String
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session, sessionmaker
 
 # --- Configuration du moteur de base de données ---
 _RAW_DB_URL = os.getenv("DATABASE_URL", "")
