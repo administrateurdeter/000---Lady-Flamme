@@ -1,3 +1,4 @@
+
 """Point d'entrée principal du bot Discord.
 
 Ce script configure le logging, les intents Discord, charge tous les cogs
@@ -34,13 +35,13 @@ async def main() -> None:
     setup_logging()
     logger = logging.getLogger("main")
 
-    # --- NOUVELLE VALIDATION DES VARIABLES D'ENVIRONNEMENT POUR ORACLE ---
+    # --- VALIDATION CORRIGÉE DES VARIABLES D'ENVIRONNEMENT ---
     required_vars = [
         "DISCORD_BOT_TOKEN",
         "GUILD_ID",
         "DB_PASSWORD",
         "DB_TNS_NAME",
-        "WALLET_LOCATION",
+        "TNS_ADMIN",  # <-- CORRECTION APPLIQUÉE ICI
     ]
     missing_vars = [v for v in required_vars if not os.getenv(v)]
     if missing_vars:
@@ -49,15 +50,14 @@ async def main() -> None:
         )
         sys.exit(1)
 
-    # --- CORRECTION MYPY: Validation explicite pour le type de GUILD_ID ---
+    # --- Validation explicite pour le type de GUILD_ID ---
     guild_id_str = os.getenv("GUILD_ID")
     if not guild_id_str or not guild_id_str.isdigit():
         logger.critical(
             "La variable d'environnement GUILD_ID doit être un entier valide."
         )
         sys.exit(1)
-
-    # À ce stade, mypy sait que guild_id_str est une chaîne de chiffres.
+    
     guild_id = int(guild_id_str)
 
     # --- Configuration des Intents Discord ---
