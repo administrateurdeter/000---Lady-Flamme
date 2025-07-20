@@ -15,4 +15,4 @@ SQLAlchemy
 
 # --- Modèle de progression "Spline Unifiée" ---
 numpy
-scipy
+scipyoracledb~=1.4

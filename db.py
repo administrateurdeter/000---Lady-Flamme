@@ -1,13 +1,19 @@
-"""Gestion de la base de données Lady‑Flamme (Oracle ADB + SQLAlchemy).
+"""
+Gestion de la base de données Lady‑Flamme (Oracle 19c ADB + SQLAlchemy).
 
-– Modèle `User`
+– Modèle User
 – Helpers cache/leaderboard
 – Fonctions CRUD + achat atomique
-Compatible ADB 19c : la colonne `items` est stockée en CLOB (JSON sérialisé).
+
+La colonne `items` est stockée en CLOB (JSON sérialisé) : compatible avec
+les Autonomous Databases 19c (où le type JSON natif n’est pas disponible).
 """
 
 from __future__ import annotations
 
+# --------------------------------------------------------------------------- #
+# Imports                                                                    #
+# --------------------------------------------------------------------------- #
 import json
 import logging
 import os
@@ -32,18 +38,18 @@ from sqlalchemy.orm import (
 
 from config import BotConfig
 
-# ---------------------------------------------------------------------------
-# Vérif variables env
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------- #
+# Vérification des variables d’environnement                                  #
+# --------------------------------------------------------------------------- #
 if not all([BotConfig.DB_PASSWORD, BotConfig.DB_TNS_NAME, BotConfig.WALLET_LOCATION]):
     raise ValueError(
-        "DB_PASSWORD, DB_TNS_NAME et WALLET_LOCATION doivent être définies."
+        "DB_PASSWORD, DB_TNS_NAME et WALLET_LOCATION doivent être définies dans .env"
     )
 
-# ---------------------------------------------------------------------------
-# Moteur SQLAlchemy (Thin + Wallet)
-# ---------------------------------------------------------------------------
-TNS_DIR = os.environ["TNS_ADMIN"]  # dossier wallet exporté
+# --------------------------------------------------------------------------- #
+# Moteur SQLAlchemy (mode Thin + Wallet)                                      #
+# --------------------------------------------------------------------------- #
+TNS_DIR = os.environ["TNS_ADMIN"]  # dossier wallet déjà exporté
 
 engine = create_engine(
     "oracle+oracledb://",
@@ -61,24 +67,26 @@ engine = create_engine(
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
-# ---------------------------------------------------------------------------
-# Helpers sérialisation items
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------- #
+# Helpers (sérialisation / désérialisation des items)                         #
+# --------------------------------------------------------------------------- #
 
 
 def _items_to_db(value: list | None) -> str:
+    """Convertit la liste d’objets → chaîne JSON pour stockage."""
     return json.dumps(value or [])
 
 
 def _items_from_db(value: str | None) -> list:
+    """Convertit la chaîne JSON stockée → liste Python."""
     return json.loads(value or "[]")
 
 
-# ---------------------------------------------------------------------------
-# Modèle
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------- #
+# Modèles                                                                     #
+# --------------------------------------------------------------------------- #
 class Base(DeclarativeBase):
-    """Classe de base pour les modèles SQLAlchemy (compatible mypy)."""
+    """Base SQLAlchemy avec typing friendly (mypy)."""
 
     pass
 
@@ -87,42 +95,44 @@ class User(Base):
     __tablename__ = "users"
 
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    nick: Mapped[str | None] = mapped_column(String, nullable=True)
+    nick: Mapped[str | None] = mapped_column(String(100), nullable=True)
     xp: Mapped[int] = mapped_column(Integer, default=0)
     level: Mapped[int] = mapped_column(Integer, default=0)
     coins: Mapped[int] = mapped_column(Integer, default=0)
     items: Mapped[str] = mapped_column(
         CLOB,
         nullable=True,
-        default="[]",
-    )  # JSON sérialisé
+        default="[]",  # chaîne JSON vide
+    )
     last_daily: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
-# ---------------------------------------------------------------------------
-# Création table (si absente)
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------- #
+# Création de la table si elle n’existe pas                                   #
+# --------------------------------------------------------------------------- #
 try:
     Base.metadata.create_all(bind=engine)
-except Exception as e:
-    logging.error("Erreur DB : %s", e)
+except Exception as exc:  # pragma: no cover
+    logging.error("Erreur DB : %s", exc)
 
 
-# ---------------------------------------------------------------------------
-# Session helper
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------- #
+# Helpers sessions                                                            #
+# --------------------------------------------------------------------------- #
 def get_session() -> Session:
+    """Renvoie une session SQLAlchemy déjà configurée."""
     return SessionLocal()
 
 
-# ---------------------------------------------------------------------------
-# Leaderboard cache
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------- #
+# Leaderboard cache (en mémoire)                                              #
+# --------------------------------------------------------------------------- #
 _leaderboard_cache: List[Dict[str, Any]] = []
 _last_cache_time: datetime = datetime.min
 
 
 def rebuild_leaderboard_cache() -> None:
+    """Recharge le cache complet depuis la base."""
     with get_session() as session:
         stmt = select(User).order_by(User.xp.desc(), User.coins.desc())
         users = session.execute(stmt).scalars().all()
@@ -149,10 +159,11 @@ def get_leaderboard_from_cache() -> List[Dict[str, Any]]:
     return _leaderboard_cache
 
 
-# ---------------------------------------------------------------------------
-# CRUD & achat atomique
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------- #
+# CRUD & achat atomique                                                       #
+# --------------------------------------------------------------------------- #
 def fetch_user(user_id: int) -> Dict[str, Any]:
+    """Récupère un utilisateur (créé si absent)."""
     with get_session() as session:
         user = session.get(User, user_id)
         if not user:
@@ -179,6 +190,7 @@ def fetch_user(user_id: int) -> Dict[str, Any]:
 
 
 def save_user(data: Dict[str, Any]) -> None:
+    """Met à jour un utilisateur existant avec `data`."""
     with get_session() as session:
         user = session.get(User, data["user_id"])
         if user:
@@ -192,17 +204,18 @@ def save_user(data: Dict[str, Any]) -> None:
 
 
 def atomic_purchase(user_id: int, item_name: str, price: int) -> tuple[bool, str]:
+    """Achete un objet de manière transactionnelle."""
     with get_session() as session:
         user = session.get(User, user_id, with_for_update=True)
         if not user:
             return False, "Utilisateur non trouvé."
 
         if user.coins < price:
-            return False, f"Solde insuffisant. Vous avez {user.coins} Ignis."
+            return False, f"Solde insuffisant : {user.coins} Ignis."
 
         items = _items_from_db(user.items)
         items.append(item_name)
         user.items = _items_to_db(items)
         user.coins -= price
         session.commit()
-        return True, "Achat réussi !"
+        return True, "Achat réussi !"

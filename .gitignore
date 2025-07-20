@@ -49,4 +49,4 @@ htmlcov/
 
 # --- Caches des outils de qualité ---
 .mypy_cache/
-.pytest_cache/
+.pytest_cache/.env
