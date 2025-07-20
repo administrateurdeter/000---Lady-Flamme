@@ -5,52 +5,80 @@ d'accès atomiques et sécurisées pour interagir avec la base de données.
 Il inclut également un système de cache pour le leaderboard.
 """
 
+from __future__ import annotations
+
 import logging
+import os
 from datetime import datetime
 from typing import Any, Dict, List
 
-from sqlalchemy import create_engine, DateTime, Integer, JSON, select, String
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session, sessionmaker
+from sqlalchemy import (
+    DateTime,
+    Integer,
+    JSON,
+    String,
+    create_engine,
+    select,
+)
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    Mapped,
+    Session,
+    mapped_column,
+    sessionmaker,
+)
 
-from config import BotConfig  # On importe la configuration centralisée
+from config import BotConfig  # Configuration centralisée
 
-# --- NOUVELLE CONFIGURATION DU MOTEUR POUR ORACLE CLOUD ---
-# Vérification que les variables critiques sont définies
-if not all([BotConfig.DB_PASSWORD, BotConfig.DB_TNS_NAME, BotConfig.WALLET_LOCATION]):
+# ---------------------------------------------------------
+# 1. Vérification des variables d'environnement critiques
+# ---------------------------------------------------------
+if not all(
+    [
+        BotConfig.DB_PASSWORD,
+        BotConfig.DB_TNS_NAME,
+        BotConfig.WALLET_LOCATION,
+    ]
+):
     raise ValueError(
         "Les variables d'environnement DB_PASSWORD, DB_TNS_NAME, et "
         "WALLET_LOCATION doivent être définies."
     )
 
-# Construction de la chaîne de connexion (DSN) pour Oracle
-dsn = f"{BotConfig.DB_USER}/{BotConfig.DB_PASSWORD}@{BotConfig.DB_TNS_NAME}"
+# ---------------------------------------------------------
+# 2. Création du moteur SQLAlchemy (Thin mode + Wallet)
+# ---------------------------------------------------------
+TNS_DIR = os.environ["TNS_ADMIN"]  # dossier wallet déjà exporté
 
-# Création du moteur SQLAlchemy pour Oracle
 engine = create_engine(
-    "oracle+oracledb://",  # <-- CORRECTION APPLIQUÉE ICI
+    "oracle+oracledb://",  # Thin driver
     connect_args={
-        "dsn": dsn,
-        "config_dir": BotConfig.WALLET_LOCATION,
-        "wallet_location": BotConfig.WALLET_LOCATION,
-        "wallet_password": BotConfig.WALLET_PASSWORD,
+        "user": os.getenv("DB_USER", "ADMIN"),
+        "password": os.getenv("DB_PASSWORD"),
+        "dsn": os.getenv("DB_TNS_NAME"),
+        "config_dir": TNS_DIR,  # indispensable
+        "wallet_location": TNS_DIR,  # indispensable
+        "wallet_password": os.getenv("WALLET_PASSWORD"),  # indispensable
     },
     future=True,
+    pool_pre_ping=True,
 )
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
-# --- Le reste du fichier ne change pas ---
+# ---------------------------------------------------------
+# 3. Modèles SQLAlchemy
+# ---------------------------------------------------------
 class Base(DeclarativeBase):
-    """Classe de base pour les modèles SQLAlchemy, compatible avec mypy."""
-
-    pass
+    """Classe de base pour les modèles SQLAlchemy (compatible mypy)."""
 
 
 class User(Base):
-    """Modèle de données représentant un utilisateur dans la base."""
+    """Modèle de données représentant un utilisateur Discord."""
 
     __tablename__ = "users"
+
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     nick: Mapped[str | None] = mapped_column(String, nullable=True)
     xp: Mapped[int] = mapped_column(Integer, default=0)
@@ -60,23 +88,32 @@ class User(Base):
     last_daily: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
+# ---------------------------------------------------------
+# 4. Création des tables (au démarrage)
+# ---------------------------------------------------------
 try:
     Base.metadata.create_all(bind=engine)
 except Exception as e:
-    logging.error(f"Erreur de connexion à la base de données: {e}")
+    logging.error("Erreur de connexion à la base de données: %s", e)
 
 
+# ---------------------------------------------------------
+# 5. Helpers session
+# ---------------------------------------------------------
 def get_session() -> Session:
-    """Crée et retourne une nouvelle session SQLAlchemy."""
+    """Retourne une nouvelle session SQLAlchemy."""
     return SessionLocal()
 
 
+# ---------------------------------------------------------
+# 6. Cache leaderboard
+# ---------------------------------------------------------
 _leaderboard_cache: List[Dict[str, Any]] = []
 _last_cache_time: datetime = datetime.min
 
 
 def rebuild_leaderboard_cache() -> None:
-    """Reconstruit le cache du leaderboard à partir de la base de données."""
+    """Reconstruit le cache du leaderboard depuis la base."""
     with get_session() as session:
         stmt = select(User).order_by(User.xp.desc(), User.coins.desc())
         users = session.execute(stmt).scalars().all()
@@ -90,7 +127,9 @@ def rebuild_leaderboard_cache() -> None:
             "level": u.level,
             "coins": u.coins,
             "items": u.items or [],
-            "avatar": f"https://cdn.discordapp.com/avatars/{u.user_id}/{u.user_id}.png",
+            "avatar": (
+                f"https://cdn.discordapp.com/avatars/{u.user_id}/{u.user_id}.png"
+            ),
         }
         for u in users
     ]
@@ -98,14 +137,17 @@ def rebuild_leaderboard_cache() -> None:
 
 
 def get_leaderboard_from_cache() -> List[Dict[str, Any]]:
-    """Retourne le leaderboard depuis le cache. Le reconstruit si vide."""
+    """Retourne le leaderboard depuis le cache (reconstruit si vide)."""
     if not _leaderboard_cache:
         rebuild_leaderboard_cache()
     return _leaderboard_cache
 
 
+# ---------------------------------------------------------
+# 7. Fonctions CRUD utilisateur
+# ---------------------------------------------------------
 def fetch_user(user_id: int) -> Dict[str, Any]:
-    """Récupère un utilisateur par son ID, le crée s'il n'existe pas."""
+    """Récupère un utilisateur ; le crée s'il n'existe pas."""
     with get_session() as session:
         user = session.get(User, user_id)
         if not user:
@@ -126,7 +168,7 @@ def fetch_user(user_id: int) -> Dict[str, Any]:
 
 
 def save_user(data: Dict[str, Any]) -> None:
-    """Sauvegarde les données d'un dictionnaire utilisateur en base."""
+    """Sauvegarde les champs présents dans `data`."""
     with get_session() as session:
         user = session.get(User, data["user_id"])
         if user:
@@ -136,11 +178,13 @@ def save_user(data: Dict[str, Any]) -> None:
             session.commit()
 
 
+# ---------------------------------------------------------
+# 8. Transaction atomique d'achat
+# ---------------------------------------------------------
 def atomic_purchase(user_id: int, item_name: str, price: int) -> tuple[bool, str]:
-    """Effectue un achat dans une transaction atomique."""
+    """Effectue un achat en garantissant l'intégrité des données."""
     with get_session() as session:
         user = session.get(User, user_id, with_for_update=True)
-
         if not user:
             return False, "Utilisateur non trouvé."
 
