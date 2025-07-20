@@ -22,7 +22,6 @@ class BotConfig:
     DB_USER: str = os.getenv("DB_USER", "ADMIN")
     DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
     DB_TNS_NAME: str = os.getenv("DB_TNS_NAME", "")
-    WALLET_LOCATION: str = os.getenv("WALLET_LOCATION", "")
     WALLET_PASSWORD: str = os.getenv("WALLET_PASSWORD", "")
 
     # --- Configuration Web & Logs ---
