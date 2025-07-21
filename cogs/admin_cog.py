@@ -5,6 +5,7 @@ import logging
 import discord
 from discord.ext import commands
 
+from cogs.economy_cog import ShopView
 from db import User, get_session, rebuild_leaderboard_cache
 from utils import total_xp_to_level
 
@@ -73,6 +74,26 @@ class AdminCog(commands.Cog):
             f"✅ Recalcul terminé ! {updated_count} utilisateurs ont vu "
             "leur niveau mis à jour."
         )
+
+    @commands.command(name="post_shop_panel")
+    @commands.is_owner()
+    async def post_shop_panel(
+        self, ctx: commands.Context, channel: discord.TextChannel
+    ) -> None:
+        """Poste le panneau de la boutique persistant dans un salon."""
+        embed = discord.Embed(
+            title="🔥 Boutique d'Ignis 🔥",
+            description="Bienvenue dans la boutique ! Cliquez sur un "
+            "bouton pour acheter un objet.",
+            colour=0xFE6A33,
+        )
+        await channel.send(embed=embed, view=ShopView())
+
+        # Correction E501: construction du message avant l'envoi.
+        response_message = (
+            f"✅ Panneau de la boutique posté avec succès dans {channel.mention}."
+        )
+        await ctx.send(response_message)
 
 
 async def setup(bot: commands.Bot) -> None:

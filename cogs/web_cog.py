@@ -11,7 +11,7 @@ from flask import Flask, render_template, request
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 from werkzeug.serving import make_server
 
-from config import VisualConfig
+from config import BotConfig, VisualConfig
 from db import get_leaderboard_from_cache
 from utils import XP_CUM_TABLE
 
@@ -81,9 +81,12 @@ def xp_bounds(level: int) -> tuple[int, int]:
 @app.route("/leaderboard")
 def leaderboard():
     """Affiche la page web du leaderboard complet et paginé."""
+    bot: commands.Bot = app.config["BOT_INSTANCE"]
+    guild = bot.get_guild(BotConfig.GUILD_ID)
+
     page = max(int(request.args.get("page", 1)), 1)
     per_page = int(request.args.get("per_page", 50))
-    if per_page not in (50, 100, 200):
+    if per_page not in (25, 50, 100):
         per_page = 50
 
     cached = get_leaderboard_from_cache()
@@ -91,9 +94,15 @@ def leaderboard():
     for d in cached:
         xp = d.get("xp", 0)
         lvl = d.get("level", 0)
-
         name = html.escape(d.get("nick") or f"Utilisateur {d.get('user_id')}")
-        avatar = d.get("avatar") or "https://cdn.discordapp.com/embed/avatars/0.png"
+
+        # Logique d'avatar améliorée
+        avatar_url = "https://cdn.discordapp.com/embed/avatars/0.png"
+        if guild:
+            member = guild.get_member(d["user_id"])
+            if member:
+                avatar_url = member.display_avatar.url
+                name = html.escape(member.display_name)
 
         xmin, xmax = xp_bounds(lvl)
         pct = int((xp - xmin) / (xmax - xmin) * 100) if xmax > xmin else 100
@@ -102,7 +111,7 @@ def leaderboard():
             {
                 "uid": d["user_id"],
                 "name": name,
-                "avatar": avatar,
+                "avatar": avatar_url,
                 "level": lvl,
                 "xp": xp,
                 "percent": pct,
@@ -116,16 +125,14 @@ def leaderboard():
     start = (page - 1) * per_page
     entries = members[start : start + per_page]
 
-    return (
-        render_template(
-            "leaderboard.html",
-            entries=entries,
-            page=page,
-            per_page=per_page,
-            start=start,
-            pages=pages,
-        ),
-        200,
+    return render_template(
+        "leaderboard.html",
+        entries=entries,
+        page=page,
+        per_page=per_page,
+        start=start,
+        pages=pages,
+        total=total,
     )
 
 
@@ -136,6 +143,7 @@ class WebCog(commands.Cog):
         """Initialise le cog et démarre le serveur web dans un thread séparé."""
         super().__init__()
         self.bot = bot
+        app.config["BOT_INSTANCE"] = bot
         port = int(os.environ.get("PORT", 3000))
         self._server = make_server("0.0.0.0", port, app)
         self._thread = Thread(target=self._server.serve_forever, daemon=True)

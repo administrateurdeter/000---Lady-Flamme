@@ -1,4 +1,3 @@
-
 """Point d'entrée principal du bot Discord.
 
 Ce script configure le logging, les intents Discord, charge tous les cogs
@@ -57,7 +56,7 @@ async def main() -> None:
             "La variable d'environnement GUILD_ID doit être un entier valide."
         )
         sys.exit(1)
-    
+
     guild_id = int(guild_id_str)
 
     # --- Configuration des Intents Discord ---
