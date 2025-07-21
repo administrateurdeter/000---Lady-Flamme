@@ -67,14 +67,14 @@ class CommandsCog(commands.Cog):
 
         for idx, user_data in enumerate(lb_data[:10], start=1):
             member = guild.get_member(user_data["user_id"])
-
-            if member:
-                display_name = member.display_name
-            else:
-                display_name = (
+            display_name = (
+                member.display_name
+                if member
+                else (
                     user_data.get("nick")
                     or f"Utilisateur parti ({user_data['user_id']})"
                 )
+            )
 
             embed.add_field(
                 name=f"{idx}. {display_name}",
@@ -108,7 +108,6 @@ class CommandsCog(commands.Cog):
             needed = 1
 
         bar = make_progress_bar(cur, needed)
-
         display_cur = int(cur)
         display_needed = int(needed)
 
@@ -124,7 +123,8 @@ class CommandsCog(commands.Cog):
             value=f"{display_cur:,}/{display_needed:,} XP\n{bar}",
             inline=False,
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        embed.set_footer(text=f"Commande demandée par {interaction.user.display_name}")
+        await interaction.response.send_message(embed=embed, ephemeral=False)
 
     @app_commands.command(
         name="sac", description="Affiche tes Ignis et les objets de ton inventaire."
@@ -161,9 +161,15 @@ class CommandsCog(commands.Cog):
                 description="Une erreur est survenue, réessaie dans un instant.",
                 colour=VisualConfig.COLORS["error"],
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-        except Exception:
-            pass
+            # Vérifie si la réponse a déjà été envoyée
+            if not interaction.response.is_done():
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            else:
+                await interaction.followup.send(embed=embed, ephemeral=True)
+        except Exception as e:
+            logger.error(
+                "Erreur dans le gestionnaire d'erreur on_app_command_error", exc_info=e
+            )
 
 
 async def setup(bot: commands.Bot) -> None:

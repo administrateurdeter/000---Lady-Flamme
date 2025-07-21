@@ -1,4 +1,3 @@
-
 """
 Gestion de la base de données Lady-Flamme (Oracle 19c ADB + SQLAlchemy).
 
@@ -9,7 +8,6 @@ Gestion de la base de données Lady-Flamme (Oracle 19c ADB + SQLAlchemy).
 from __future__ import annotations
 
 import json
-import logging
 import os
 from datetime import datetime
 from typing import Any, Dict, List
@@ -21,7 +19,6 @@ from sqlalchemy import (
     String,
     create_engine,
     select,
-    text,
 )
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -35,9 +32,7 @@ from config import BotConfig
 
 # --- 1. Configuration via variables d'environnement ---
 if not all([BotConfig.DB_PASSWORD, BotConfig.DB_TNS_NAME, os.getenv("TNS_ADMIN")]):
-    raise RuntimeError(
-        "DB_PASSWORD, DB_TNS_NAME et TNS_ADMIN doivent être définies."
-    )
+    raise RuntimeError("DB_PASSWORD, DB_TNS_NAME et TNS_ADMIN doivent être définies.")
 
 TNS_ADMIN = os.environ["TNS_ADMIN"]
 
@@ -58,16 +53,20 @@ engine = create_engine(
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
+
 # --- 3. Helpers (JSON <-> CLOB) ---
 def _items_to_db(value: list | None) -> str:
     return json.dumps(value or [])
 
+
 def _items_from_db(value: str | None) -> list:
     return json.loads(value or "[]")
+
 
 # --- 4. Déclarations de modèles ---
 class Base(DeclarativeBase):
     pass
+
 
 class User(Base):
     __tablename__ = "users"
@@ -79,13 +78,16 @@ class User(Base):
     items: Mapped[str] = mapped_column(CLOB, default="[]")
     last_daily: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
+
 # --- 6. Sessions helpers ---
 def get_session() -> Session:
     return SessionLocal()
 
+
 # --- 7. Cache leaderboard ---
 _leaderboard_cache: List[Dict[str, Any]] = []
 _last_cache_time: datetime = datetime.min
+
 
 def rebuild_leaderboard_cache() -> None:
     with get_session() as session:
@@ -94,18 +96,24 @@ def rebuild_leaderboard_cache() -> None:
     global _leaderboard_cache, _last_cache_time
     _leaderboard_cache = [
         {
-            "user_id": u.user_id, "nick": u.nick, "xp": u.xp,
-            "level": u.level, "coins": u.coins, "items": _items_from_db(u.items),
+            "user_id": u.user_id,
+            "nick": u.nick,
+            "xp": u.xp,
+            "level": u.level,
+            "coins": u.coins,
+            "items": _items_from_db(u.items),
             "avatar": f"https://cdn.discordapp.com/avatars/{u.user_id}/{u.user_id}.png",
         }
         for u in users
     ]
     _last_cache_time = datetime.utcnow()
 
+
 def get_leaderboard_from_cache() -> List[Dict[str, Any]]:
     if not _leaderboard_cache:
         rebuild_leaderboard_cache()
     return _leaderboard_cache
+
 
 # --- 8. CRUD + achat atomique ---
 def fetch_user(user_id: int) -> Dict[str, Any]:
@@ -117,10 +125,15 @@ def fetch_user(user_id: int) -> Dict[str, Any]:
             session.commit()
             session.refresh(user)
     return {
-        "user_id": user.user_id, "nick": user.nick, "xp": user.xp,
-        "level": user.level, "coins": user.coins, "items": _items_from_db(user.items),
+        "user_id": user.user_id,
+        "nick": user.nick,
+        "xp": user.xp,
+        "level": user.level,
+        "coins": user.coins,
+        "items": _items_from_db(user.items),
         "last_daily": user.last_daily,
     }
+
 
 def save_user(data: Dict[str, Any]) -> None:
     with get_session() as session:
@@ -133,6 +146,7 @@ def save_user(data: Dict[str, Any]) -> None:
                 user.items = _items_to_db(data["items"])
             session.commit()
 
+
 def atomic_purchase(user_id: int, item_name: str, price: int) -> tuple[bool, str]:
     with get_session() as session:
         user = session.get(User, user_id, with_for_update=True)
@@ -140,7 +154,7 @@ def atomic_purchase(user_id: int, item_name: str, price: int) -> tuple[bool, str
             return False, "Utilisateur non trouvé."
         if user.coins < price:
             return False, f"Solde insuffisant : {user.coins} Ignis."
-        
+
         items = _items_from_db(user.items)
         items.append(item_name)
         user.items = _items_to_db(items)
